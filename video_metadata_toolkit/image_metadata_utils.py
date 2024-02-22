@@ -26,32 +26,23 @@ import ffmpeg
 from google.cloud import vision
 
 
-def detect_labels_dict(
-    path: str,
-    in_dict: dict[str, int],
-    threshold: float,
-) -> dict[str, int]:
-  """Gets labels and saves in dictionary from given screenshot image
+def detect_labels_dict(path, in_dict, threshold) -> dict[str, int]:
+  """Get labels and saves in dictionary from given screenshot image
   using Cloud Vision API.
 
   Args:
       path: A string of the path of the screenshot to be processed.
       in_dict: An empty or existing dict where the key is the string of
-        labels, and the values are the frequency of appearance of each.
-      threshold: A float representing the threshold to use for label detection.
+      laels, and the values are the frequency of appearance of each.
 
   Returns:
       A dict mapping where keys are string labels related to metadata
       of each print and their int frequency of appeareance in descending order.
-
       For example:
-        {
-         "Wood": 6,
-         "Audio equipment": 1,
-         "Handwriting": 1,
-         "Technology": 1
-        }
+      [('Wood', 6), ('Audio equipment', 1),
+      ('Handwriting', 1), ('Technology', 1)]
   """
+
   client = vision.ImageAnnotatorClient()
 
   with open(path, "rb") as image_file:
@@ -71,18 +62,12 @@ def detect_labels_dict(
   return in_dict
 
 
-def generate_screenshot(
-    in_filename: str,
-    out_filename: str,
-    time: int,
-    width: int,
-) -> str:
+def generate_screenshot(in_filename, out_filename, time, width) -> str:
   """Gets a screenshot at specific time frame and saves locally.
 
   Args:
-      in_filename: The path of the .mp4 video file to be processed.
-      out_filename: The path where the screenshot should be saved. Add desired
-        extesion.
+      in_filename: A string of the path of the .mp4 video file to be processed.
+      out_filename: A string of the screenshot to be saved. Add desired extesion.
       time: An int of the time in seconds of where to take the printscreen from
       video.
       width: An int representing the desired size of screenshot. Example: 500.
@@ -109,7 +94,7 @@ def generate_screenshot(
   return out_filename
 
 
-def get_video_duration(in_filename: str) -> int:
+def get_video_duration(in_filename) -> int:
   """Gets a video file duration.
 
   Args:
@@ -123,7 +108,7 @@ def get_video_duration(in_filename: str) -> int:
   return duration
 
 
-def remove_local_file(in_file: str) -> str:
+def remove_local_file(in_file) -> str:
   """Removes a local file.
 
   Args:

@@ -24,7 +24,7 @@ of each in descending order.
 
 Typical usage example:
 
-  python3 image_metadata.py labels ./local_file.mp4 0.90 --persist
+  python3 image_metadata.py labels ./local_file.mp4 0.90 y
 """
 
 import argparse
@@ -33,7 +33,6 @@ import operator
 
 import image_metadata_utils as utils
 
-OUTPUT_FILE_PREFIX = "vod_mdd_"
 SCREENSHOT_1_FILE = "./begin1.jpg"
 SCREENSHOT_2_FILE = "./begin2.jpg"
 SCREENSHOT_3_FILE = "./middle1.jpg"
@@ -43,16 +42,18 @@ SCREENSHOT_6_FILE = "./end2.jpg"
 SCREENSHOT_WIDTH_PX = 500
 
 
-def generate_metadata(path: str, confidence: float) -> [str, dict[str, int]]:
+def run_local(in_args) -> [str, dict[str, int]]:
   """Main code logic execution.
 
   Saves screenshot files locally, fetches metadata for each image and outputs
    dictionary with labels, frequency of each and the timestamp.
 
   Args:
-      path: A string. Path of the .mp4 file to be processed.
-      conf_threshold: A float between 0 and 1. Represents confidence
+      in_args.comman: A string. Currently only "labels" supported
+      in_args.path: A string. Path of the .mp4 file to be processed.
+      in_args.conf_threshold: A float between 0 and 1. Represents confidence
       threshold to consider when detecting labels.
+      in_args.persist_files: y or n. Persist files if y, and cleansup if n.
 
   Returns:
       An array where the first element is a string timestamp of execution and
@@ -66,58 +67,54 @@ def generate_metadata(path: str, confidence: float) -> [str, dict[str, int]]:
 
   time_stamp = str(datetime.datetime.now())
 
-  duration = float(utils.get_video_duration(path))
+  duration = float(utils.get_video_duration(in_args.path))
   duration_tenth = duration / 10
   begin_seconds = duration_tenth
   middle_seconds = duration / 2
   end_seconds = duration
 
   utils.generate_screenshot(
-      path, SCREENSHOT_1_FILE, begin_seconds, SCREENSHOT_WIDTH_PX
+      in_args.path, SCREENSHOT_1_FILE, begin_seconds, SCREENSHOT_WIDTH_PX
   )
   utils.generate_screenshot(
-      path,
-      SCREENSHOT_2_FILE,
-      begin_seconds + duration_tenth,
-      SCREENSHOT_WIDTH_PX,
+      in_args.path, SCREENSHOT_2_FILE, begin_seconds + duration_tenth, SCREENSHOT_WIDTH_PX
   )
   utils.generate_screenshot(
-      path, SCREENSHOT_3_FILE, middle_seconds, SCREENSHOT_WIDTH_PX
+      in_args.path, SCREENSHOT_3_FILE, middle_seconds, SCREENSHOT_WIDTH_PX
   )
   utils.generate_screenshot(
-      path,
-      SCREENSHOT_4_FILE,
-      middle_seconds + duration_tenth,
-      SCREENSHOT_WIDTH_PX,
+      in_args.path, SCREENSHOT_4_FILE, middle_seconds + duration_tenth, SCREENSHOT_WIDTH_PX
   )
   utils.generate_screenshot(
-      path,
+      in_args.path,
       SCREENSHOT_5_FILE,
       end_seconds - duration_tenth * 2,
       SCREENSHOT_WIDTH_PX,
   )
   utils.generate_screenshot(
-      path, SCREENSHOT_6_FILE, end_seconds - duration_tenth, SCREENSHOT_WIDTH_PX
+      in_args.path, SCREENSHOT_6_FILE, end_seconds - duration_tenth, SCREENSHOT_WIDTH_PX
   )
 
   return_dict = {}
 
-  utils.detect_labels_dict(SCREENSHOT_1_FILE, return_dict, confidence)
-  utils.detect_labels_dict(SCREENSHOT_2_FILE, return_dict, confidence)
-  utils.detect_labels_dict(SCREENSHOT_3_FILE, return_dict, confidence)
-  utils.detect_labels_dict(SCREENSHOT_4_FILE, return_dict, confidence)
-  utils.detect_labels_dict(SCREENSHOT_5_FILE, return_dict, confidence)
-  utils.detect_labels_dict(SCREENSHOT_6_FILE, return_dict, confidence)
+  utils.detect_labels_dict(SCREENSHOT_1_FILE, return_dict, in_args.conf_threshold)
+  utils.detect_labels_dict(SCREENSHOT_2_FILE, return_dict, in_args.conf_threshold)
+  utils.detect_labels_dict(SCREENSHOT_3_FILE, return_dict, in_args.conf_threshold)
+  utils.detect_labels_dict(SCREENSHOT_4_FILE, return_dict, in_args.conf_threshold)
+  utils.detect_labels_dict(SCREENSHOT_5_FILE, return_dict, in_args.conf_threshold)
+  utils.detect_labels_dict(SCREENSHOT_6_FILE, return_dict, in_args.conf_threshold)
 
-  return_dict = sorted(
-      return_dict.items(), key=operator.itemgetter(1), reverse=True
-  )
+  return_dict = sorted(return_dict.items(), key=operator.itemgetter(1), reverse=True)
   return_dict_with_time = [time_stamp, return_dict]
+  print(return_dict_with_time)
+
+  if in_args.persist_files.lower() == "n":
+    clean_up()
 
   return return_dict_with_time
 
 
-def _clean_up() -> [str]:
+def clean_up() -> [str]:
   """Cleans local files used for processing.
 
   Returns:
@@ -139,32 +136,15 @@ def _clean_up() -> [str]:
   ]
 
 
-def main(in_args: object):
-  """main function. Generates and saves output to file and cleans if neeeded."""
-
-  path = in_args.path
-  confidence = in_args.conf_threshold
-  return_dict_with_time = generate_metadata(path, confidence)
-  utils.dict_output_to_file(OUTPUT_FILE_PREFIX, return_dict_with_time)
-
-  if not in_args.persist_files:
-    _clean_up()
-
-
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(
       description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
   )
   subparsers = parser.add_subparsers(dest="command")
 
-  main_parser = subparsers.add_parser("labels", help=main.__doc__)
-  main_parser.add_argument("path")
-  main_parser.add_argument("conf_threshold")
-  main_parser.add_argument(
-      "--persist", dest="persist_files", action="store_true"
-  )
-  main_parser.add_argument(
-      "--no-persist", dest="persist_files", action="store_false"
-  )
+  run_local_parser = subparsers.add_parser("labels", help=run_local.__doc__)
+  run_local_parser.add_argument("path")
+  run_local_parser.add_argument("conf_threshold")
+  run_local_parser.add_argument("persist_files")
   args = parser.parse_args()
-  main(args)
+  run_local(args)
