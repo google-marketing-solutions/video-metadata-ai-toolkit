@@ -1,3 +1,6 @@
+ffmpeg-python==0.2.0
 google-cloud-storage==2.14.0
+google-cloud-vision==3.7.0
 pyink==23.12.1
 pylint==3.0.3
+urllib3==2.1.0
