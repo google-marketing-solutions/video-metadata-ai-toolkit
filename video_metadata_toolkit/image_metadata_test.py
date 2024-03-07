@@ -28,14 +28,15 @@ class TestImageMetadata(unittest.TestCase):
           description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
       )
       subparsers = parser.add_subparsers(dest="command")
-      run_local_parser = subparsers.add_parser(
-          "labels", help=image_metadata.run_local.__doc__
+      main_parser = subparsers.add_parser("labels", help=image_metadata.main.__doc__)
+      main_parser.add_argument("path")
+      main_parser.add_argument("conf_threshold")
+      main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+      main_parser.add_argument(
+          "--no-persist", dest="persist_files", action="store_false"
       )
-      run_local_parser.add_argument("path")
-      run_local_parser.add_argument("conf_threshold")
-      run_local_parser.add_argument("persist_files")
-      args = parser.parse_args(["labels", "BAD_PATH.mp4", "0.90", "y"])
-      image_metadata.run_local(args)
+      args = parser.parse_args(["labels", "BAD_PATH.mp4", "0.90", "--persist"])
+      image_metadata.main(args)
 
   def test_run_pair_frames_local_bad_input_params(self):
     "Tests for valid input params before processing."
@@ -45,13 +46,14 @@ class TestImageMetadata(unittest.TestCase):
           description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
       )
       subparsers = parser.add_subparsers(dest="command")
-      run_local_parser = subparsers.add_parser(
-          "labels", help=image_metadata.run_local.__doc__
+      main_parser = subparsers.add_parser("labels", help=image_metadata.main.__doc__)
+      main_parser.add_argument("path")
+      main_parser.add_argument("conf_threshold")
+      main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+      main_parser.add_argument(
+          "--no-persist", dest="persist_files", action="store_false"
       )
-      run_local_parser.add_argument("path")
-      run_local_parser.add_argument("conf_threshold")
-      run_local_parser.add_argument("persist_files")
-      image_metadata.run_local()
+      image_metadata.main()
 
 
 if __name__ == "__main__":

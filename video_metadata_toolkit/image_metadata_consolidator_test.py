@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for image_metadata_consolidator."""
 
 import argparse
 import unittest
@@ -19,14 +18,13 @@ import unittest
 import image_metadata_consolidator as consolidator
 
 
-class ImageMetadataConsolidatorTest(unittest.TestCase):
+class TestImageMetadataConsolidator(unittest.TestCase):
 
   def test_consolidator_input_bad_date_format(self):
     "Tests valid input argument format."
 
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     subparsers = parser.add_subparsers(dest="command")
     consolidator_parser = subparsers.add_parser(
@@ -35,9 +33,7 @@ class ImageMetadataConsolidatorTest(unittest.TestCase):
     consolidator_parser.add_argument("dt_init")
     consolidator_parser.add_argument("dt_end")
     consolidator_parser.add_argument("file_path")
-    args = parser.parse_args(
-        ["labels", "not-a-valid-date", "not-a-valid-date", "./"]
-    )
+    args = parser.parse_args(["labels", "not-a-valid-date", "not-a-valid-date", "./"])
 
     with self.assertRaises(ValueError):
       consolidator.main(args)

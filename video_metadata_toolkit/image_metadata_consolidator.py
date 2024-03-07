@@ -152,9 +152,7 @@ def _dict_output_to_file(input_list: list[str]) -> str:
       A string of the file named saved.
   """
 
-  file_timestamp = datetime.datetime.strptime(
-      input_list[0], "%Y-%m-%d %H:%M:%S.%f"
-  )
+  file_timestamp = datetime.datetime.strptime(input_list[0], "%Y-%m-%d %H:%M:%S.%f")
   dict_input = input_list[1]
   file_name = (
       FILE_OUTPUT_PREFIX

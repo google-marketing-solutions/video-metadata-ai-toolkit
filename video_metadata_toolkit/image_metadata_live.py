@@ -25,8 +25,7 @@ label and the frequency of each in descending order.
 
 Typical usage example:
 
-  python3 image_metadata_live.py labels
-    https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8 0.70 y
+  python3 image_metadata_live.py labels https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8 0.70 --persist
 
 PLEASE NOTE: REGEX is still not Generic! Will have to adapt depending on
 the stream/.TS File format.
@@ -44,6 +43,7 @@ import image_metadata_utils as utils
 
 LOCAL_MP4_FILE = "local_mp4_file.mp4"
 LOCAL_TS_FILE = "local_ts_file.ts"
+OUTPUT_FILE_PREFIX = "stream_mdd_"
 SCREENSHOT_1_FILE = "./begin1.jpg"
 SCREENSHOT_2_FILE = "./begin2.jpg"
 SCREENSHOT_3_FILE = "./middle1.jpg"
@@ -53,7 +53,7 @@ SCREENSHOT_6_FILE = "./end2.jpg"
 SCREENSHOT_WIDTH_PX = 500
 
 
-def run_live(in_args) -> [str, dict[str, int]]:
+def generate_metadata(url: str, confidence: int) -> [str, dict[str, int]]:
   """Main code logic execution.
 
   Saves screenshot files locally, fetches metadata for each image and outputs
@@ -64,7 +64,6 @@ def run_live(in_args) -> [str, dict[str, int]]:
       in_args.url: A string. URL of stream .m3u8 file to be processed.
       in_args.conf_threshold: A float between 0 and 1. Represents confidence
       threshold to consider when detecting labels.
-      in_args.persist_files: y or n. Persist files if y, and cleansup if n.
 
   Returns:
       An array where the first element is a string timestamp of execution and
@@ -77,27 +76,23 @@ def run_live(in_args) -> [str, dict[str, int]]:
   """
 
   time_stamp = str(datetime.datetime.now())
-  get_frames(in_args.url)
+  _get_frames(url)
 
   return_dict = {}
-  utils.detect_labels_dict(SCREENSHOT_1_FILE, return_dict, in_args.conf_threshold)
-  utils.detect_labels_dict(SCREENSHOT_2_FILE, return_dict, in_args.conf_threshold)
-  utils.detect_labels_dict(SCREENSHOT_3_FILE, return_dict, in_args.conf_threshold)
-  utils.detect_labels_dict(SCREENSHOT_4_FILE, return_dict, in_args.conf_threshold)
-  utils.detect_labels_dict(SCREENSHOT_5_FILE, return_dict, in_args.conf_threshold)
-  utils.detect_labels_dict(SCREENSHOT_6_FILE, return_dict, in_args.conf_threshold)
+  utils.detect_labels_dict(SCREENSHOT_1_FILE, return_dict, confidence)
+  utils.detect_labels_dict(SCREENSHOT_2_FILE, return_dict, confidence)
+  utils.detect_labels_dict(SCREENSHOT_3_FILE, return_dict, confidence)
+  utils.detect_labels_dict(SCREENSHOT_4_FILE, return_dict, confidence)
+  utils.detect_labels_dict(SCREENSHOT_5_FILE, return_dict, confidence)
+  utils.detect_labels_dict(SCREENSHOT_6_FILE, return_dict, confidence)
 
   return_dict = sorted(return_dict.items(), key=operator.itemgetter(1), reverse=True)
   return_dict_with_time = [time_stamp, return_dict]
 
-  print(return_dict_with_time)
-
-  if in_args.persist_files.lower() == "n":
-    clean_up()
   return return_dict_with_time
 
 
-def get_frames(url) -> [str]:
+def _get_frames(url: str) -> [str]:
   """Get frames from video and calls method to generate sceenshoot from frames.
 
   Initially fetches base url from stream, followed by the manifest, followed
@@ -119,10 +114,10 @@ def get_frames(url) -> [str]:
       middle1.jpg, middle2.jpg, end1.jpg, end2.jpg.
   """
 
-  base = get_base(url)
-  streams = get_manifest(url)
+  base = _get_base(url)
+  streams = _get_manifest(url)
   manif_selected = base + "/" + streams[round(len(streams) / 2)]
-  segments = get_ts_segments(manif_selected)
+  segments = _get_ts_segments(manif_selected)
   seg_selected = base + "/" + segments[round(len(segments) - 1)]
 
   duration = float(utils.get_video_duration(seg_selected))
@@ -131,9 +126,9 @@ def get_frames(url) -> [str]:
   middle_seconds = duration / 2
   end_seconds = duration
 
-  download_file(seg_selected, LOCAL_TS_FILE)
+  _download_file(seg_selected, LOCAL_TS_FILE)
 
-  convert_ts_to_mp4(LOCAL_TS_FILE, LOCAL_MP4_FILE)
+  _convert_ts_to_mp4(LOCAL_TS_FILE, LOCAL_MP4_FILE)
   utils.generate_screenshot(
       LOCAL_MP4_FILE, SCREENSHOT_1_FILE, begin_seconds, SCREENSHOT_WIDTH_PX
   )
@@ -159,7 +154,10 @@ def get_frames(url) -> [str]:
       SCREENSHOT_WIDTH_PX,
   )
   utils.generate_screenshot(
-      LOCAL_MP4_FILE, SCREENSHOT_6_FILE, end_seconds - duration_tenth, SCREENSHOT_WIDTH_PX
+      LOCAL_MP4_FILE,
+      SCREENSHOT_6_FILE,
+      end_seconds - duration_tenth,
+      SCREENSHOT_WIDTH_PX,
   )
 
   return [
@@ -172,7 +170,7 @@ def get_frames(url) -> [str]:
   ]
 
 
-def get_base(url) -> str:
+def _get_base(url: str) -> str:
   """Gets the base URL from stream .m3u8 file.
 
   Args:
@@ -188,7 +186,7 @@ def get_base(url) -> str:
   return base
 
 
-def get_manifest(url) -> [str]:
+def _get_manifest(url: str) -> [str]:
   """Get manifest entries from base URL.
 
   Args:
@@ -206,7 +204,7 @@ def get_manifest(url) -> [str]:
   return streams
 
 
-def get_ts_segments(url) -> [str]:
+def _get_ts_segments(url: str) -> [str]:
   """Gets .ts file names from selected manifest URL.
 
   Args:
@@ -224,7 +222,7 @@ def get_ts_segments(url) -> [str]:
   return segments
 
 
-def convert_ts_to_mp4(input_file, output_file) -> str:
+def _convert_ts_to_mp4(input_file: str, output_file: str) -> str:
   """Converts ts file to .mp4 file for processing.
 
   Args:
@@ -252,7 +250,7 @@ def convert_ts_to_mp4(input_file, output_file) -> str:
   return output_file
 
 
-def download_file(url, filename=None) -> str:
+def _download_file(url: str, filename: str = None) -> str:
   """Downloads latest .ts file from stream locally
 
   Args:
@@ -270,7 +268,7 @@ def download_file(url, filename=None) -> str:
   return filename
 
 
-def clean_up() -> [str]:
+def _clean_up() -> [str]:
   """Cleans local files used for processing.
 
   Returns:
@@ -297,14 +295,27 @@ def clean_up() -> [str]:
   ]
 
 
+def main(in_args: object):
+  """main function. Generates and saves output to file and cleans if neeeded."""
+
+  url = in_args.url
+  confidence = in_args.conf_threshold
+  return_dict_with_time = generate_metadata(url, confidence)
+  utils.dict_output_to_file(OUTPUT_FILE_PREFIX, return_dict_with_time)
+
+  if not in_args.persist_files:
+    _clean_up()
+
+
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(
       description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
   )
   subparsers = parser.add_subparsers(dest="command")
-  run_live_parser = subparsers.add_parser("labels", help=run_live.__doc__)
-  run_live_parser.add_argument("url")
-  run_live_parser.add_argument("conf_threshold")
-  run_live_parser.add_argument("persist_files")
+  main_parser = subparsers.add_parser("labels", help=main.__doc__)
+  main_parser.add_argument("url")
+  main_parser.add_argument("conf_threshold")
+  main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+  main_parser.add_argument("--no-persist", dest="persist_files", action="store_false")
   args = parser.parse_args()
-  run_live(args)
+  main(args)
