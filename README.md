@@ -47,3 +47,9 @@ For VS Code users, you can configure the formatter to run automatically by addin
 To manually run the linter:
 ```
 pylint
+```
+
+### Disclaimer
+
+This is not an officially supported Google product. The code samples shared here
+are not formally supported by Google and are provided only as a reference.
