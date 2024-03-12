@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for image_metadata."""
 
 import argparse
 import unittest
@@ -19,19 +20,24 @@ import ffmpeg
 import image_metadata
 
 
-class TestImageMetadata(unittest.TestCase):
+class ImageMetadataTest(unittest.TestCase):
 
   def test_nonexistent_path(self):
     "Tests for valid video file to exist before processing."
     with self.assertRaises(ffmpeg.Error):
       parser = argparse.ArgumentParser(
-          description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+          description=__doc__,
+          formatter_class=argparse.RawDescriptionHelpFormatter,
       )
       subparsers = parser.add_subparsers(dest="command")
-      main_parser = subparsers.add_parser("labels", help=image_metadata.main.__doc__)
+      main_parser = subparsers.add_parser(
+          "labels", help=image_metadata.main.__doc__
+      )
       main_parser.add_argument("path")
       main_parser.add_argument("conf_threshold")
-      main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+      main_parser.add_argument(
+          "--persist", dest="persist_files", action="store_true"
+      )
       main_parser.add_argument(
           "--no-persist", dest="persist_files", action="store_false"
       )
@@ -43,13 +49,18 @@ class TestImageMetadata(unittest.TestCase):
 
     with self.assertRaises(TypeError):
       parser = argparse.ArgumentParser(
-          description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+          description=__doc__,
+          formatter_class=argparse.RawDescriptionHelpFormatter,
       )
       subparsers = parser.add_subparsers(dest="command")
-      main_parser = subparsers.add_parser("labels", help=image_metadata.main.__doc__)
+      main_parser = subparsers.add_parser(
+          "labels", help=image_metadata.main.__doc__
+      )
       main_parser.add_argument("path")
       main_parser.add_argument("conf_threshold")
-      main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+      main_parser.add_argument(
+          "--persist", dest="persist_files", action="store_true"
+      )
       main_parser.add_argument(
           "--no-persist", dest="persist_files", action="store_false"
       )

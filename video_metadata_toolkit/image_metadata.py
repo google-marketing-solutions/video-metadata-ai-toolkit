@@ -72,7 +72,9 @@ def generate_metadata(path: str, confidence: float) -> [str, dict[str, int]]:
   middle_seconds = duration / 2
   end_seconds = duration
 
-  utils.generate_screenshot(path, SCREENSHOT_1_FILE, begin_seconds, SCREENSHOT_WIDTH_PX)
+  utils.generate_screenshot(
+      path, SCREENSHOT_1_FILE, begin_seconds, SCREENSHOT_WIDTH_PX
+  )
   utils.generate_screenshot(
       path,
       SCREENSHOT_2_FILE,
@@ -107,7 +109,9 @@ def generate_metadata(path: str, confidence: float) -> [str, dict[str, int]]:
   utils.detect_labels_dict(SCREENSHOT_5_FILE, return_dict, confidence)
   utils.detect_labels_dict(SCREENSHOT_6_FILE, return_dict, confidence)
 
-  return_dict = sorted(return_dict.items(), key=operator.itemgetter(1), reverse=True)
+  return_dict = sorted(
+      return_dict.items(), key=operator.itemgetter(1), reverse=True
+  )
   return_dict_with_time = [time_stamp, return_dict]
 
   return return_dict_with_time
@@ -156,7 +160,11 @@ if __name__ == "__main__":
   main_parser = subparsers.add_parser("labels", help=main.__doc__)
   main_parser.add_argument("path")
   main_parser.add_argument("conf_threshold")
-  main_parser.add_argument("--persist", dest="persist_files", action="store_true")
-  main_parser.add_argument("--no-persist", dest="persist_files", action="store_false")
+  main_parser.add_argument(
+      "--persist", dest="persist_files", action="store_true"
+  )
+  main_parser.add_argument(
+      "--no-persist", dest="persist_files", action="store_false"
+  )
   args = parser.parse_args()
   main(args)

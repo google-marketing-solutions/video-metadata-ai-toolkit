@@ -25,7 +25,7 @@ python -m unittest discover video_metadata_toolkit  -p "*_test.py"
 
 #### Code format
 
-Submitted code should conform to Google's Python style guide. To format code automatically, run `pyink --pyink-indentation=2 [FILENAME]`.
+Submitted code should conform to Google's Python style guide. To format code automatically, run `pyink --pyink-indentation=2 -l 80 [FILENAME]`.
 
 For VS Code users, you can configure the formatter to run automatically by adding the following to your `settings.json`:
 
@@ -44,9 +44,11 @@ For VS Code users, you can configure the formatter to run automatically by addin
 ],
 ```
 
-To manually run the linter:
+#### Scripts
+
+To manually run tests and the linter:
 ```
-pylint
+sh test_and_lint.sh
 ```
 
 ### Disclaimer
