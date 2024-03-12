@@ -21,7 +21,7 @@ import image_metadata_utils as utils
 from google import cloud
 
 
-class TestImageMetadataUtils(unittest.TestCase):
+class ImageMetadataUtilsTest(unittest.TestCase):
 
   @mock.patch("builtins.open")
   @mock.patch.object(cloud, "vision", autospec=True)

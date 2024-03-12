@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for image_metadata_live."""
 
 import argparse
 import unittest
@@ -18,14 +19,15 @@ import unittest
 import image_metadata_live
 
 
-class TestImageMetadataLive(unittest.TestCase):
+class ImageMetadataLiveTest(unittest.TestCase):
 
   def test_run_live_bad_input_params(self):
     "Tests for valid input params before processing."
 
     with self.assertRaises(TypeError):
       parser = argparse.ArgumentParser(
-          description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+          description=__doc__,
+          formatter_class=argparse.RawDescriptionHelpFormatter,
       )
       subparsers = parser.add_subparsers(dest="command")
       main_parser = subparsers.add_parser(
@@ -33,7 +35,9 @@ class TestImageMetadataLive(unittest.TestCase):
       )
       main_parser.add_argument("url")
       main_parser.add_argument("conf_threshold")
-      main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+      main_parser.add_argument(
+          "--persist", dest="persist_files", action="store_true"
+      )
       main_parser.add_argument(
           "--no-persist", dest="persist_files", action="store_false"
       )
@@ -44,7 +48,8 @@ class TestImageMetadataLive(unittest.TestCase):
 
     with self.assertRaises(IndexError):
       parser = argparse.ArgumentParser(
-          description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+          description=__doc__,
+          formatter_class=argparse.RawDescriptionHelpFormatter,
       )
       subparsers = parser.add_subparsers(dest="command")
       main_parser = subparsers.add_parser(
@@ -52,7 +57,9 @@ class TestImageMetadataLive(unittest.TestCase):
       )
       main_parser.add_argument("url")
       main_parser.add_argument("conf_threshold")
-      main_parser.add_argument("--persist", dest="persist_files", action="store_true")
+      main_parser.add_argument(
+          "--persist", dest="persist_files", action="store_true"
+      )
       main_parser.add_argument(
           "--no-persist", dest="persist_files", action="store_false"
       )

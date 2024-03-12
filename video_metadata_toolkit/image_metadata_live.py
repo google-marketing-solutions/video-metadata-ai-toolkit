@@ -25,7 +25,8 @@ label and the frequency of each in descending order.
 
 Typical usage example:
 
-  python3 image_metadata_live.py labels https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8 0.70 --persist
+  python3 image_metadata_live.py labels \
+    https://example-live-stream.com/master.m3u8 0.70 --persist
 
 PLEASE NOTE: REGEX is still not Generic! Will have to adapt depending on
 the stream/.TS File format.
@@ -53,7 +54,7 @@ SCREENSHOT_6_FILE = "./end2.jpg"
 SCREENSHOT_WIDTH_PX = 500
 
 
-def generate_metadata(url: str, confidence: int) -> [str, dict[str, int]]:
+def generate_metadata(url: str, confidence: int) -> list[str, dict[str, int]]:
   """Main code logic execution.
 
   Saves screenshot files locally, fetches metadata for each image and outputs
@@ -86,13 +87,15 @@ def generate_metadata(url: str, confidence: int) -> [str, dict[str, int]]:
   utils.detect_labels_dict(SCREENSHOT_5_FILE, return_dict, confidence)
   utils.detect_labels_dict(SCREENSHOT_6_FILE, return_dict, confidence)
 
-  return_dict = sorted(return_dict.items(), key=operator.itemgetter(1), reverse=True)
+  return_dict = sorted(
+      return_dict.items(), key=operator.itemgetter(1), reverse=True
+  )
   return_dict_with_time = [time_stamp, return_dict]
 
   return return_dict_with_time
 
 
-def _get_frames(url: str) -> [str]:
+def _get_frames(url: str) -> list[str]:
   """Get frames from video and calls method to generate sceenshoot from frames.
 
   Initially fetches base url from stream, followed by the manifest, followed
@@ -180,13 +183,13 @@ def _get_base(url: str) -> str:
       A string pertaining to the base url, such as:
       www.streamdomain.com
   """
-  # All the regex here my have to be changed according to the m3u8 and ts formats
+  # TODO: Genericize regex to support various m3u8/ts formats.
   sequence0 = re.compile(r"(https?\:\/\/.*)(/.*?\.m3u8)", re.MULTILINE)
   base = re.findall(sequence0, str(url))[0][0]
   return base
 
 
-def _get_manifest(url: str) -> [str]:
+def _get_manifest(url: str) -> list[str]:
   """Get manifest entries from base URL.
 
   Args:
@@ -195,7 +198,7 @@ def _get_manifest(url: str) -> [str]:
   Returns:
       An array of strings pertaining to the manifest file of stream.
   """
-  # All the regex here my have to be changed according to the m3u8 and ts formats
+  # TODO: Genericize regex to support various m3u8/ts formats.
   with urllib.urlopen(url) as response:
     content = response.read()
 
@@ -204,7 +207,7 @@ def _get_manifest(url: str) -> [str]:
   return streams
 
 
-def _get_ts_segments(url: str) -> [str]:
+def _get_ts_segments(url: str) -> list[str]:
   """Gets .ts file names from selected manifest URL.
 
   Args:
@@ -213,7 +216,7 @@ def _get_ts_segments(url: str) -> [str]:
   Returns:
       An array of strings pertaining to the .ts file names of the stream.
   """
-  # All the regex here my have to be changed according to the m3u8 and ts formats
+  # TODO: Genericize regex to support various m3u8/ts formats.
   with urllib.urlopen(url) as response:
     content = response.read()
 
@@ -268,7 +271,7 @@ def _download_file(url: str, filename: str = None) -> str:
   return filename
 
 
-def _clean_up() -> [str]:
+def _clean_up() -> list[str]:
   """Cleans local files used for processing.
 
   Returns:
@@ -315,7 +318,11 @@ if __name__ == "__main__":
   main_parser = subparsers.add_parser("labels", help=main.__doc__)
   main_parser.add_argument("url")
   main_parser.add_argument("conf_threshold")
-  main_parser.add_argument("--persist", dest="persist_files", action="store_true")
-  main_parser.add_argument("--no-persist", dest="persist_files", action="store_false")
+  main_parser.add_argument(
+      "--persist", dest="persist_files", action="store_true"
+  )
+  main_parser.add_argument(
+      "--no-persist", dest="persist_files", action="store_false"
+  )
   args = parser.parse_args()
   main(args)
