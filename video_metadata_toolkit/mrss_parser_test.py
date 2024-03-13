@@ -14,173 +14,35 @@
 
 """Tests for mrss_parser."""
 
-from dataclasses import dataclass
 import unittest
-from unittest.mock import MagicMock, patch
-
-import feedparser
+import feedparser as fp
+from unittest import mock
 import mrss_parser
-from video_class import Video
+class TestMrssParser(unittest.TestCase):
 
+    @mock.patch.object(fp, 'parse', autospec=True)
+    def test_fetch_video_file_urls_success(self, mock_parse):
+        """Tests successful parsing of a sample MRSS feed."""
 
-@dataclass
-class MockEntry:
+        # Mock MRSS feed data
+        mock_feed = fp.FeedParserDict()
+        mock_feed.entries = [
+            {'guid': 'video_123', 'media_content': [{'url': 'http://test.com/video1.mp4'}]},
+            {'guid': 'video_456', 'media_content': [{'url': 'http://test.com/video2.mp4'}]}
+        ]
+        mock_parse.return_value = mock_feed
 
-  def get(self, key, default=None):
-    mock_data = {
-        "dfpvideo:contentID": "video123",
-        "guid": "guid456",  # Used if contentID is not present
-        "media_content": [{"uri": "http://example.com/video.mp4"}],
-        "title": "You Can't See Me But I'm Waving Video",
-        "media:description": (
-            "Description of a video where this person waving could not be seen."
-        ),
-        "media_tags": ["tag1", "tag2"],
-    }
-    return mock_data.get(key, default)
+        # Expected output
+        expected_videos = {
+            'video_123': 'http://test.com/video1.mp4',
+            'video_456': 'http://test.com/video2.mp4'
+        }
 
-  def __iter__(self):
-    yield self  # Yield the MockEntry object itself when iterated
+        # Call the function
+        result = mrss_parser.fetch_video_file_urls('test_mrss_url')
+        # Assert the result
+        self.assertEqual(result, expected_videos)
+        mock_parse.assert_called_with('test_mrss_url')
 
-
-class TestMRSSParser(unittest.TestCase):
-
-  def setUp(self):
-    """Setup common patches for all tests."""
-    # Start the patch for detect_duration method in the Video class
-    self.patcher = patch.object(Video, "detect_duration", return_value=120)
-    self.mock_duration = self.patcher.start()
-
-  def tearDown(self):
-    """Stop patches after each test."""
-    self.patcher.stop()
-
-  @patch("feedparser.parse")
-  def test_parse_mrss_success(self, mock_parse):
-    """Tests successful parsing of a valid MRSS feed."""
-    mock_entry = MagicMock()
-    mock_entry.get.side_effect = lambda key, default=None: {
-        "dfpvideo:contentID": "video123",
-        "guid": "guid456",
-        "media_content": [{"url": "http://example.com/video.mp4"}],
-        "title": "You Can't See Me But I'm Waving Video",
-        "media:description": (
-            "Description of a video where this person waving could not be seen."
-        ),
-        "media_tags": ["tag1", "tag2"],
-    }.get(key, default)
-
-    mock_feed = MagicMock()
-    mock_feed.entries = [mock_entry]
-    mock_parse.return_value = mock_feed
-
-    videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
-
-    self.assertIsNotNone(videos)
-    self.assertIsInstance(videos, list)
-    self.assertEqual(len(videos), 1)
-    self.assertEqual(videos[0].id, "video123")
-    self.assertEqual(videos[0].uri, "http://example.com/video.mp4")
-    self.assertEqual(videos[0].title, "You Can't See Me But I'm Waving Video")
-    self.assertEqual(
-        videos[0].description,
-        "Description of a video where this person waving could not be seen.",
-    )
-    self.assertEqual(videos[0].metadata, ["tag1", "tag2"])
-
-  @patch("feedparser.parse")
-  def test_video_attributes(self, mock_parse):
-    """Tests the attributes of the videos parsed from the MRSS feed."""
-    mock_entry = MagicMock()
-    mock_entry.get.side_effect = lambda key, default=None: {
-        "dfpvideo:contentID": "video123",
-        "guid": "guid456",
-        "media_content": [{"url": "http://example.com/video.mp4"}],
-        "title": "You Can't See Me But I'm Waving Video",
-        "media:description": (
-            "Description of a video where this person waving could not be seen."
-        ),
-        "media_tags": ["tag1", "tag2"],
-    }.get(key, default)
-
-    mock_feed = MagicMock()
-    mock_feed.entries = [mock_entry]
-    mock_parse.return_value = mock_feed
-
-    videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
-
-    video = videos[0]
-    self.assertEqual(video.id, "video123")
-    self.assertEqual(video.uri, "http://example.com/video.mp4")
-    self.assertEqual(video.title, "You Can't See Me But I'm Waving Video")
-    self.assertEqual(
-        video.description,
-        "Description of a video where this person waving could not be seen.",
-    )
-    self.assertEqual(video.metadata, ["tag1", "tag2"])
-
-  @patch("feedparser.parse")
-  def test_parse_mrss_empty_feed(self, mock_parse):
-    """Tests the behavior when the MRSS feed has no entries."""
-    mock_feed = MagicMock()
-    mock_feed.entries = []
-    mock_parse.return_value = mock_feed
-
-    videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
-    self.assertIsInstance(videos, list)
-    self.assertEqual(len(videos), 0)
-
-  @patch("feedparser.parse")
-  def test_parse_mrss_missing_attributes(self, mock_parse):
-    """Tests parsing entries with missing attributes."""
-    mock_entry = MagicMock()
-    mock_entry.get.side_effect = lambda key, default=None: {
-        "dfpvideo:contentID": "video123",
-        "media_content": [{"url": "http://example.com/video.mp4"}],
-        "title": "You Can't See Me But I'm Waving Video",
-    }.get(key, default)
-
-    mock_feed = MagicMock()
-    mock_feed.entries = [mock_entry]
-    mock_parse.return_value = mock_feed
-
-    videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
-
-    self.assertIsNotNone(videos)
-    self.assertIsInstance(videos, list)
-    self.assertEqual(len(videos), 1)
-    self.assertEqual(videos[0].metadata, {})
-    self.assertIsNone(videos[0].description)
-
-  @patch("feedparser.parse", side_effect=Exception("Failed to fetch"))
-  def test_parse_mrss_error_handling(self, mock_parse):
-    """Tests the function's error handling."""
-    videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
-    self.assertEqual(len(videos), 0)
-
-  @patch("feedparser.parse")
-  def test_parse_mrss_invalid_media_uri(self, mock_parse):
-    """Tests entries with missing or invalid media URIs."""
-    mock_entry = MagicMock()
-    mock_entry.get.side_effect = lambda key, default=None: {
-        "dfpvideo:contentID": "video123",
-        "media_content": [{}],  # Missing URL
-        "title": "You Can't See Me But I'm Waving Video",
-        "media:description": (
-            "Description of a video where this person waving could not be seen."
-        ),
-    }.get(key, default)
-
-    mock_feed = MagicMock()
-    mock_feed.entries = [mock_entry]
-    mock_parse.return_value = mock_feed
-
-    videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
-
-    self.assertIsNotNone(videos)
-    self.assertIsInstance(videos, list)
-    self.assertEqual(len(videos), 0)  # No video added due to missing URL
-
-
-if __name__ == "__main__":
-  unittest.main()
+if __name__ == '__main__':
+    unittest.main()

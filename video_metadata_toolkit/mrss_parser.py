@@ -14,51 +14,29 @@
 
 """Module for parsing MRSS Feeds."""
 
-from typing import List
-import feedparser
-from video_class import Video
+import feedparser as fp
 
-
-def parse_mrss(mrss_url: str) -> List[Video]:
-  """Parses a specific publisher's MRSS feed to extract video information.
-
-  This function is designed to handle the unique structure of a particular
-  publisher's MRSS feed. It extracts video IDs, titles, descriptions, metadata,
-  and URLs to create  a list of `Video` objects. May need to change for another
-  publisher's MRSS feed.
+def fetch_video_file_urls(mrss_url: str) -> dict[str, str]:
+  """
+  Parses the given MRSS Feed to get the individual videos.
 
   Args:
-      mrss_url: The URL of the MRSS feed to parse.
+    mrss_url: The link to the MRSS feed.
 
   Returns:
-      A list of `Video` objects if the feed is parsed successfully.
-
-  Raises:
-       Exception: If any issue arises during the parsing process.
+    A dictionary of videos like {video id: media file URLs}.
   """
-  try:
-    feed = feedparser.parse(mrss_url)
-    videos = []
-    for entry in feed.entries:
-      try:
-        video_id = entry.get("dfpvideo:contentID") or entry.get("guid")
-        media_content = entry.get("media_content", [{}])
-        media_url = media_content[0].get("url") if media_content else None
-        title = entry.get("title")
-        description = entry.get("media:description")
-        metadata = entry.get("media_tags")
-        if video_id and media_url:
-          video = Video(
-              id=video_id,
-              title=title,
-              uri=media_url,
-              metadata=metadata,
-              description=description,
-          )
-          videos.append(video)
-      except Exception as video_error:
-        print(f"Error processing video entry: {video_error} for entry: {entry}")
-    return videos
-  except Exception as mrs_parsing_exception:
-    print(f"Error parsing MRSS feed: {mrs_parsing_exception}")
-    return []
+  feed = fp.parse(mrss_url)
+  videos = {}
+  for entry in feed.entries:
+    # Key - If it exists, video ID = <dfpvideo:contentID>, otherwise = <guid>
+    if 'dfpvideo:contentId' in entry:
+      video_id = entry['dfpvideo:contentID']
+    elif 'guid' in entry:
+      video_id = entry['guid']
+    # Value - If it exists, media_content = <media:content url>
+    if 'media_content' in entry:
+      media_url = entry['media_content'][0]['url']
+    if video_id and media_url:
+      videos[video_id] = media_url
+  return videos
