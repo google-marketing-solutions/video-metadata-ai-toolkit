@@ -15,64 +15,71 @@
 
 import unittest
 from unittest import mock
-
 import smart_ad_breaks
-import video_analysis
-
-_TEST_SHOT_DETECT_RESPONSE = [
-    video_analysis.VideoSegment(0.0, 12.1),
-    video_analysis.VideoSegment(12.3, 12.5),
-    video_analysis.VideoSegment(12.7, 60.1),
-    video_analysis.VideoSegment(60.3, 60.8),
-    video_analysis.VideoSegment(65.3, 65.8),
-]
+import shot_detection
 
 
+@mock.patch.object(shot_detection, "detect_shot_changes_gcp", autospec=True)
 class SmartAdBreaksTest(unittest.TestCase):
 
-  def test_determine_video_cue_points_video_analyzer_args(self):
-    mock_analyzer = mock.MagicMock(spec=video_analysis.VideoAnalyzer)
-
-    smart_ad_breaks.determine_video_cue_points(
-        "video", mock_analyzer, volume_threshold=-10.0
+  def test_determine_video_cue_points_gcp_uses_shot_detection(
+      self, mock_detect_shots_gcp
+  ):
+    mock_video_client = mock.MagicMock()
+    smart_ad_breaks.determine_video_cue_points_gcp(
+        "video_uri", video_intelligence_client=mock_video_client
     )
 
-    mock_analyzer.detect_shot_changes.assert_called_once_with(
-        "video", volume_threshold=-10.0
+    mock_detect_shots_gcp.assert_called_once_with(
+        "video_uri", video_intelligence_client=mock_video_client
     )
 
-  def test_determine_video_cue_points(self):
-    fake_video_analyzer = video_analysis.FakeVideoAnalyzer(
-        detect_shot_responses=[_TEST_SHOT_DETECT_RESPONSE]
-    )
+  def test_determine_video_cue_points_gcp(self, mock_detect_shots_gcp):
+    mock_detect_shots_gcp.return_value = [
+        shot_detection.VideoSegment(0.0, 12.1),
+        shot_detection.VideoSegment(12.3, 12.5),
+        shot_detection.VideoSegment(12.7, 60.1),
+        shot_detection.VideoSegment(60.3, 60.8),
+        shot_detection.VideoSegment(65.3, 65.8),
+    ]
 
-    cue_points = smart_ad_breaks.determine_video_cue_points(
-        "video_uri", fake_video_analyzer
+    cue_points = smart_ad_breaks.determine_video_cue_points_gcp(
+        "video_uri", video_intelligence_client=mock.MagicMock()
     )
 
     self.assertEqual(cue_points, [0, 60.2])
 
-  def test_determine_video_cue_points_first_cue(self):
-    fake_video_analyzer = video_analysis.FakeVideoAnalyzer(
-        detect_shot_responses=[_TEST_SHOT_DETECT_RESPONSE]
+  def test_determine_video_cue_points_gcp_first_cue(
+      self, mock_detect_shots_gcp
+  ):
+    mock_detect_shots_gcp.return_value = [
+        shot_detection.VideoSegment(0.0, 12.1),
+        shot_detection.VideoSegment(12.3, 12.5),
+    ]
+
+    cue_points = smart_ad_breaks.determine_video_cue_points_gcp(
+        "video_uri",
+        video_intelligence_client=mock.MagicMock(),
+        minimum_time_for_first_cue_point=10.0,
     )
 
-    cue_points = smart_ad_breaks.determine_video_cue_points(
-        "video_uri", fake_video_analyzer, minimum_time_for_first_cue_point=10.0
+    self.assertEqual(cue_points, [12.2])
+
+  def test_determine_video_cue_points_gcp_between_cues(
+      self, mock_detect_shots_gcp
+  ):
+    mock_detect_shots_gcp.return_value = [
+        shot_detection.VideoSegment(0.0, 12.1),
+        shot_detection.VideoSegment(12.3, 12.5),
+    ]
+
+    cue_points = smart_ad_breaks.determine_video_cue_points_gcp(
+        "video_uri",
+        video_intelligence_client=mock.MagicMock(),
+        minimum_time_between_cue_points=10.0,
     )
 
-    self.assertEqual(cue_points, [12.2, 60.2])
-
-  def test_determine_video_cue_points_between_cues(self):
-    fake_video_analyzer = video_analysis.FakeVideoAnalyzer(
-        detect_shot_responses=[_TEST_SHOT_DETECT_RESPONSE]
-    )
-
-    cue_points = smart_ad_breaks.determine_video_cue_points(
-        "video_uri", fake_video_analyzer, minimum_time_between_cue_points=5.0
-    )
-
-    self.assertEqual(cue_points, [0.0, 12.2, 60.2, 65.8])
+    self.assertEqual(cue_points, [0, 12.2])
 
 
 if __name__ == "__main__":

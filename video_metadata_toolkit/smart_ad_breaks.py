@@ -15,83 +15,100 @@
 
 import sys
 import argparse
-
-import video_analysis
+import shot_detection
 
 from google.cloud import videointelligence
 
 
+class _ShotChange(shot_detection.VideoSegment):
+  volume: float | None = None
+
+
 def _calculate_optimal_cue_points(
-    potential_cue_points: list[float],
+    shot_changes: list[_ShotChange],
     minimum_time_for_first_cue_point: float = 0.0,
     minimum_time_between_cue_points: float = 30.0,
+    maximum_volume: float = -25.0,
 ) -> list[float]:
-  """Calculates optimal cue point times for a list of potential cue points.
+  """Calculates optimal cue point times for a list of shot changes.
 
   Args:
-    potential_cue_points: A list of floats representing possible cue points.
+    shot_changes: A list of ShotChange objects
     minimum_time_for_first_cue_point: A float, the earliest time, in seconds,
       that can be returned in the list of cue points. Defaults to 0.0, which
       will always be included in the output if provided.
     minimum_time_between_cue_points: A float, the shortest amount of time, in
       seconds,to allow between cue points. Defaults to 30 seconds.
+    maximum_volume: A float, the maximum volume, in db, for the shot change to
+      be included as a cue point. Defaults to -25.0, and will be a no-op if
+      the shot changes don't have volume values.
 
   Returns
     A list of floats representing the optimal cue points, in seconds.
   """
-  sorted_potential_cue_points = sorted(potential_cue_points)
+  shot_changes = sorted(shot_changes, key=lambda s: s.start_time)
   cue_points = []
-  for cue_point in sorted_potential_cue_points:
+  for shot_change in shot_changes:
+    cue_point = (
+        shot_change.start_time
+        + (shot_change.end_time - shot_change.start_time) / 2
+    )
     is_at_or_after_min_time = cue_point >= minimum_time_for_first_cue_point
+    is_quiet_enough = (
+        not shot_change.volume or shot_change.volume <= maximum_volume
+    )
     is_long_enough_after_prev_cue_point = (
         len(cue_points) == 0
         or (cue_point - minimum_time_between_cue_points) >= cue_points[-1]
     )
-    if is_at_or_after_min_time and is_long_enough_after_prev_cue_point:
+    if (
+        is_at_or_after_min_time
+        and is_quiet_enough
+        and is_long_enough_after_prev_cue_point
+    ):
       cue_points.append(cue_point)
   return cue_points
 
 
-def determine_video_cue_points(
-    video_path_or_uri: str,
-    video_analyzer: video_analysis.VideoAnalyzer,
+def determine_video_cue_points_gcp(
+    video_uri: str,
+    video_intelligence_client: videointelligence.VideoIntelligenceServiceClient,
     minimum_time_for_first_cue_point: float = 0.0,
     minimum_time_between_cue_points: float = 30.0,
-    volume_threshold: float | None = None,
 ) -> list[float]:
-  """Determines the best cue points for a video file based on shot changes.
+  """Determines the best cue points for a video hosted on GCS.
 
   Args:
-    video_path_or_uri: A string, the location of the video file
+    video_uri: A string, the URI for the video in the format gs://path/to/video
+    video_intelligence_client: The VideoIntelligenceServiceClient to use for
+      shot detection.
     minimum_time_for_first_cue_point: The earliest time, in seconds, that will
       be returned as a cue point. Defaults to 0.0, which corresponds to a
       pre-roll.
     minimum_time_between_cue_points: The smallest amount of time, in seconds,
       to allow between any two sequential cue points. Defaults to 30.0 seconds.
-    volume_threshold: The maximum volume threshold for a cue point. Can be used
-      to eliminate shot changes that may have dialogue or other important
-      audio. This is currently a no-op for files hosted on GCP.
 
   Returns:
     A list of floats with the recommended cue points, in seconds.
   """
-  video_segments = video_analyzer.detect_shot_changes(
-      video_path_or_uri, volume_threshold=volume_threshold
+  video_segments = shot_detection.detect_shot_changes_gcp(
+      video_uri, video_intelligence_client
   )
-  potential_cue_points = [0.0]
-  for i, segment in enumerate(video_segments):
+  shot_changes = []
+  shot_changes.append(_ShotChange(start_time=0.0, end_time=0.0))
+  for i, video_segment in enumerate(video_segments):
+    shot_change_start = video_segment.end_time
     if i + 1 < len(video_segments):
-      potential_cue_point = (
-          segment.end_time
-          + (video_segments[i + 1].start_time - segment.end_time) / 2
-      )
+      shot_change_end = video_segments[i + 1].start_time
     else:
-      potential_cue_point = segment.end_time
-    potential_cue_points.append(potential_cue_point)
+      shot_change_end = video_segment.end_time
+    shot_changes.append(
+        _ShotChange(start_time=shot_change_start, end_time=shot_change_end)
+    )
   return _calculate_optimal_cue_points(
-      potential_cue_points,
-      minimum_time_for_first_cue_point=minimum_time_for_first_cue_point,
-      minimum_time_between_cue_points=minimum_time_between_cue_points,
+      shot_changes,
+      minimum_time_for_first_cue_point,
+      minimum_time_between_cue_points,
   )
 
 
@@ -131,34 +148,21 @@ def _parse_args(args) -> argparse.Namespace:
           "Defaults to 30.0."
       ),
   )
-  argparser.add_argument(
-      "--volume_threshold",
-      "-v",
-      type=float,
-      default=None,
-      help=(
-          "If provided, the maximum in volume, in dB, for a cue point. This is"
-          " always a no-op for files hosted on GCP."
-      ),
-  )
   return argparser.parse_args(args)
 
 
 def main(args=sys.argv[1:]):
   args = _parse_args(args)
   if args.video.startswith("gs://"):
-    video_intel_client = videointelligence.VideoIntelligenceServiceClient()
-    video_analyzer = video_analysis.CloudVideoAnalyzer(video_intel_client)
+    cue_points = determine_video_cue_points_gcp(
+        args.video,
+        videointelligence.VideoIntelligenceServiceClient(),
+        minimum_time_for_first_cue_point=args.first_cue,
+        minimum_time_between_cue_points=args.between_cues,
+    )
+    print("Recommended cue points: ", cue_points)
   else:
-    video_analyzer = video_analysis.FfmpegVideoAnalyzer()
-  cue_points = determine_video_cue_points(
-      args.video,
-      video_analyzer,
-      minimum_time_for_first_cue_point=args.first_cue,
-      minimum_time_between_cue_points=args.between_cues,
-      volume_threshold=args.volume_threshold,
-  )
-  print("Recommended cue points: ", cue_points)
+    print("Local shot detection not yet implemented.")
 
 
 if __name__ == "__main__":
