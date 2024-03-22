@@ -16,9 +16,9 @@
 
 import feedparser as fp
 
+
 def fetch_video_file_urls(mrss_url: str) -> dict[str, str]:
-  """
-  Parses the given MRSS Feed to get the individual videos.
+  """Parses the given MRSS Feed to get the individual videos.
 
   Args:
     mrss_url: The link to the MRSS feed.
@@ -29,14 +29,14 @@ def fetch_video_file_urls(mrss_url: str) -> dict[str, str]:
   feed = fp.parse(mrss_url)
   videos = {}
   for entry in feed.entries:
-    # Key - If it exists, video ID = <dfpvideo:contentID>, otherwise = <guid>
-    if 'dfpvideo:contentId' in entry:
-      video_id = entry['dfpvideo:contentID']
-    elif 'guid' in entry:
-      video_id = entry['guid']
-    # Value - If it exists, media_content = <media:content url>
-    if 'media_content' in entry:
-      media_url = entry['media_content'][0]['url']
+    # Key - If it exists, video ID = <dfpvideo:contentID>, otherwise = <guid>.
+    if "dfpvideo:contentId" in entry:
+      video_id = entry["dfpvideo:contentID"]
+    elif "guid" in entry:
+      video_id = entry["guid"]
+    # Value - If it exists, media_content = <media:content url>.
+    if "media_content" in entry:
+      media_url = entry["media_content"][0]["url"]
     if video_id and media_url:
       videos[video_id] = media_url
   return videos

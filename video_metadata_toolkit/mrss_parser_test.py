@@ -18,31 +18,40 @@ import unittest
 import feedparser as fp
 from unittest import mock
 import mrss_parser
-class TestMrssParser(unittest.TestCase):
 
-    @mock.patch.object(fp, 'parse', autospec=True)
-    def test_fetch_video_file_urls_success(self, mock_parse):
-        """Tests successful parsing of a sample MRSS feed."""
 
-        # Mock MRSS feed data
-        mock_feed = fp.FeedParserDict()
-        mock_feed.entries = [
-            {'guid': 'video_123', 'media_content': [{'url': 'http://test.com/video1.mp4'}]},
-            {'guid': 'video_456', 'media_content': [{'url': 'http://test.com/video2.mp4'}]}
-        ]
-        mock_parse.return_value = mock_feed
+class MrssParserTest(unittest.TestCase):
 
-        # Expected output
-        expected_videos = {
-            'video_123': 'http://test.com/video1.mp4',
-            'video_456': 'http://test.com/video2.mp4'
-        }
+  @mock.patch.object(fp, "parse", autospec=True)
+  def test_fetch_video_file_urls_success(self, mock_parse):
+    """Tests successful parsing of a sample MRSS feed."""
 
-        # Call the function
-        result = mrss_parser.fetch_video_file_urls('test_mrss_url')
-        # Assert the result
-        self.assertEqual(result, expected_videos)
-        mock_parse.assert_called_with('test_mrss_url')
+    # Mock MRSS feed data.
+    mock_feed = fp.FeedParserDict()
+    mock_feed.entries = [
+        {
+            "guid": "video_123",
+            "media_content": [{"url": "http://test.com/video1.mp4"}],
+        },
+        {
+            "guid": "video_456",
+            "media_content": [{"url": "http://test.com/video2.mp4"}],
+        },
+    ]
+    mock_parse.return_value = mock_feed
 
-if __name__ == '__main__':
-    unittest.main()
+    # Expected output.
+    expected_videos = {
+        "video_123": "http://test.com/video1.mp4",
+        "video_456": "http://test.com/video2.mp4",
+    }
+
+    # Call the function.
+    result = mrss_parser.fetch_video_file_urls("test_mrss_url")
+    # Assert the result.
+    self.assertEqual(result, expected_videos)
+    mock_parse.assert_called_with("test_mrss_url")
+
+
+if __name__ == "__main__":
+  unittest.main()
