@@ -5,4 +5,5 @@ google-cloud-vision==3.7.0
 google-cloud-videointelligence==2.13.3
 pyink==23.12.1
 pylint==3.0.3
+requests==2.30.0
 urllib3==2.1.0
