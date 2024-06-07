@@ -53,7 +53,7 @@ def parse_mrss(mrss_url: str) -> List[Video]:
           video = Video(
               id=video_id,
               title=title,
-              url=media_url,
+              uri=media_url,
               metadata=metadata,
               description=description,
           )

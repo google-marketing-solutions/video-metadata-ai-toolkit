@@ -35,7 +35,7 @@ class MockEntry:
     mock_data = {
         "dfpvideo:contentID": "video123",
         "guid": "guid456",  # Used if contentID is not present
-        "media_content": [{"url": "http://example.com/video.mp4"}],
+        "media_content": [{"uri": "http://example.com/video.mp4"}],
         "title": "You Can't See Me But I'm Waving Video",
         "media:description": (
             "Description of a video where this person waving could not be seen."
@@ -68,7 +68,7 @@ class TestMRSSParser(unittest.TestCase):
       mock_entry.get.side_effect = lambda key, default=None: {
           "dfpvideo:contentID": "video123",
           "guid": "guid456",
-          "media_content": [{"url": "http://example.com/video.mp4"}],
+          "media_content": [{"uri": "http://example.com/video.mp4"}],
           "title": "You Can't See Me But I'm Waving Video",
           "media:description": (
               "Description of a video where this person waving could not be"
@@ -96,7 +96,7 @@ class TestMRSSParser(unittest.TestCase):
       mock_entry.get.side_effect = lambda key, default=None: {
           "dfpvideo:contentID": "video123",
           "guid": "guid456",
-          "media_content": [{"url": "http://example.com/video.mp4"}],
+          "media_content": [{"uri": "http://example.com/video.mp4"}],
           "title": "You Can't See Me But I'm Waving Video",
           "media:description": (
               "Description of a video where this person waving could not be"
@@ -116,7 +116,7 @@ class TestMRSSParser(unittest.TestCase):
       # Check the attributes of the first video
       video = videos[0]
       self.assertEqual(video.id, "video123")
-      self.assertEqual(video.url, "http://example.com/video.mp4")
+      self.assertEqual(video.uri, "http://example.com/video.mp4")
       self.assertEqual(video.title, "You Can't See Me But I'm Waving Video")
       self.assertEqual(
           video.description,
@@ -141,7 +141,7 @@ class TestMRSSParser(unittest.TestCase):
       mock_entry = MagicMock()
       mock_entry.get.side_effect = lambda key, default=None: {
           "dfpvideo:contentID": "video123",
-          "media_content": [{"url": "http://example.com/video.mp4"}],
+          "media_content": [{"uri": "http://example.com/video.mp4"}],
           "title": "You Can't See Me But I'm Waving Video",
       }.get(key, default)
 
@@ -164,13 +164,13 @@ class TestMRSSParser(unittest.TestCase):
       videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
       self.assertEqual(len(videos), 0)
 
-  def test_parse_mrss_invalid_media_url(self):
-    """Tests entries with missing or invalid media URLs."""
+  def test_parse_mrss_invalid_media_uri(self):
+    """Tests entries with missing or invalid media URIs."""
     with patch("feedparser.parse") as mock_parse:
       mock_entry = MagicMock()
       mock_entry.get.side_effect = lambda key, default=None: {
           "dfpvideo:contentID": "video123",
-          "media_content": [{}],  # Missing URL
+          "media_content": [{}],  # Missing URI
           "title": "You Can't See Me But I'm Waving Video",
           "media:description": (
               "Description of a video where this person waving could not be"
@@ -186,7 +186,7 @@ class TestMRSSParser(unittest.TestCase):
 
       self.assertIsNotNone(videos)
       self.assertIsInstance(videos, list)
-      self.assertEqual(len(videos), 0)  # No video added due to missing URL
+      self.assertEqual(len(videos), 0)  # No video added due to missing URI
 
 
 if __name__ == "__main__":
