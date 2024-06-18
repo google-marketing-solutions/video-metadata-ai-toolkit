@@ -14,10 +14,8 @@
 
 """Module for parsing MRSS Feeds."""
 
-import subprocess
 from typing import List
-import feedparser as fp
-import transcription_utils
+import feedparser
 from video_class import Video
 
 
@@ -39,7 +37,7 @@ def parse_mrss(mrss_url: str) -> List[Video]:
        Exception: If any issue arises during the parsing process.
   """
   try:
-    feed = fp.parse(mrss_url)
+    feed = feedparser.parse(mrss_url)
     videos = []
     for entry in feed.entries:
       try:
