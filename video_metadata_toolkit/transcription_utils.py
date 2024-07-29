@@ -149,7 +149,7 @@ def detect_language(text: str) -> list[str]:
       list[str]: Either a list of just the top most likely language (1), or a list of all
       the languages used. Defaults to British English.
   """
-  if text is None: 
+  if text is None or text == "":
       return ["en-GB"]
   translate_client = translate.TranslationServiceClient()
 

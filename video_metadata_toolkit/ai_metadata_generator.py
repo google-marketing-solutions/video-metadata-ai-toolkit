@@ -156,6 +156,7 @@ def _add_ai_attributes_to_video(
   if len(video.transcript) > 100 and video.duration < 2400:
     video.summary = llm_utils.call_llm(video, "generate_summary")
     video.ai_generated_metadata = llm_utils.call_llm(video, "generate_metadata")
+    print("ai_generated_metadata=", video.ai_generated_metadata)
     video.ai_suggested_titles = llm_utils.call_llm(
         video, "generate_title_options"
     )
@@ -201,7 +202,6 @@ def main(
   video = Video(video_id, uri=video_url, metadata=metadata, title=video_title)
   _add_ai_attributes_to_video(video, audio_bucket_name, transcript_bucket_name)
   return video
-
 
 if __name__ == "__main__":
   main()
