@@ -26,13 +26,13 @@ from video_class import Video
 
 
 def _get_video_id_from_url(video_url: str) -> Optional[str]:
-  """Extracts and returns a video ID from a specified URL based on a predefined pattern.
+  """Extracts and returns a video ID from a URL based on a predefined pattern.
 
   This function specifically checks if the URL contains 'bcboltbde696aa' to
   determine if it should proceed with extraction. If the URL matches this
-  criterion, the function uses a regex pattern to find and return a
-  UUID-like segment which represents the video ID. This segment is expected
-  to be in a specific format and position within the URL path.
+  criterion, the function uses a regex pattern to find and return a UUID-like
+  segment which represents the video ID. This segment is expected to be in a
+  specific format and position within the URL path.
 
   Note:
    The URL pattern is expected to be like:
@@ -63,13 +63,13 @@ def _get_transcription_from_video(
   """Gets a transcript from a video.
 
   Args:
-      video (Video): The Video object to get the transcription for.
-      audio_bucket_name (str): Name of the audio bucket in Google Cloud Storage.
-      transcript_bucket_name (str): Name of the transcript bucket in Google
-        Cloud Storage.
+    video (Video): The Video object to get the transcription for.
+    audio_bucket_name (str): Name of the audio bucket in Google Cloud Storage.
+    transcript_bucket_name (str): Name of the transcript bucket in Google
+      Cloud Storage.
 
   Returns:
-      The text of the transcript, or None if the transcription fails.
+    The text of the transcript, or None if the transcription fails.
   """
   video_uri = video.uri
   video_id = video.id
@@ -119,32 +119,30 @@ def _get_transcription_from_video(
 def _add_ai_attributes_to_video(
     video: Video, audio_bucket_name: str, transcript_bucket_name: str
 ) -> None:
-  """Enhances a Video object with AI-generated attributes including transcript, summary,
-  metadata, title suggestions, and external summary.
+  """Enhances a Video object with AI-generated attributes.
 
   This function performs the following steps:
   1. Retrieves the transcript of the video and assigns it to the video object.
   2. Checks if the transcript length is sufficient and the video duration is
-  below a threshold.
+    below a threshold.
   3. Generates and assigns a summary of the video using an AI model.
   4. Generates and assigns AI-generated metadata for the video.
   5. Generates and assigns AI-suggested titles for the video.
   6. Generates and assigns an AI-suggested external summary for the video.
 
   Args:
-      video (Video): The Video object to be enhanced with AI-generated
-        attributes.
-      audio_bucket_name (str): The name of the audio bucket in Google Cloud
-        Storage.
-      transcript_bucket_name (str): The name of the transcript bucket in Google
-        Cloud Storage.
+    video (Video): The Video object to be enhanced with AI-generated
+      attributes.
+    audio_bucket_name (str): The name of the audio bucket in Google Cloud
+      Storage.
+    transcript_bucket_name (str): The name of the transcript bucket in Google
+      Cloud Storage.
 
   Returns:
-      None
+    None
 
   Raises:
-      IOError: If there is an issue with retrieving or processing the
-      transcript.
+    IOError: If there is an issue with retrieving or processing the transcript.
   """
   video.transcript = _get_transcription_from_video(
       video,
@@ -176,24 +174,29 @@ def main(
   """
   Main function to process a video and generate AI attributes.
 
-  This function processes a video by generating its AI attributes, such as 
-  transcript, summary, metadata, title suggestions, and external summary.
-  It takes video details as input, processes the video, and returns a 
-  Video object with the generated attributes.
+  This function processes a video by generating its AI attributes, such as
+  transcript, summary, metadata, title suggestions, and external summary. It
+  takes video details as input, processes the video, and returns a Video object
+  with the generated attributes.
 
   Args:
-      video_id (str): The unique identifier of the video. If not provided, it will be extracted from the video URL.
-      video_url (str): The URL of the video to be processed.
-      metadata (str, optional): Metadata associated with the video. Defaults to an empty string.
-      video_title (str, optional): The title of the video. Defaults to an empty string.
-      audio_bucket_name (str, optional): The name of the audio bucket in Google Cloud Storage. Defaults to project_configs.AUDIO_BUCKET_NAME.
-      transcript_bucket_name (str, optional): The name of the transcript bucket in Google Cloud Storage. Defaults to project_configs.TRANSCRIPT_BUCKET_NAME.
+    video_id (str): The unique identifier of the video. If not provided, it will
+      be extracted from the video URL.
+    video_url (str): The URL of the video to be processed.
+    metadata (str, optional): Metadata associated with the video. Defaults to an
+      empty string.
+    video_title (str, optional): The title of the video. Defaults to an empty
+      string.
+    audio_bucket_name (str, optional): The name of the audio bucket in Google
+      Cloud Storage. Defaults to project_configs.AUDIO_BUCKET_NAME.
+    transcript_bucket_name (str, optional): The name of the transcript bucket in
+      Google Cloud Storage. Defaults to project_configs.TRANSCRIPT_BUCKET_NAME.
 
   Returns:
-      Video: The processed Video object with generated AI attributes.
+    Video: The processed Video object with generated AI attributes.
 
   Raises:
-      ValueError: If no video URL is specified.
+    ValueError: If no video URL is specified.
   """
   if not video_url:
     raise ValueError("No video URL specified.")
@@ -202,6 +205,7 @@ def main(
   video = Video(video_id, uri=video_url, metadata=metadata, title=video_title)
   _add_ai_attributes_to_video(video, audio_bucket_name, transcript_bucket_name)
   return video
+
 
 if __name__ == "__main__":
   main()

@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROJECT_ID = "" # Fill in your Google Cloud Project ID here
+PROJECT_ID = ""  # Fill in your Google Cloud Project ID here
 TRANSCRIPT_BUCKET_NAME = "transcription_files_from_audio"
 AUDIO_BUCKET_NAME = "extracted_audio_from_videos"

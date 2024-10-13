@@ -20,6 +20,7 @@ import transcription_utils
 import google.api_core.exceptions as google_exceptions
 import requests
 
+
 class TestDownloadVideo(unittest.TestCase):
 
   @mock.patch("os.makedirs")
@@ -107,7 +108,9 @@ class TestDownloadFileFromGCS(unittest.TestCase):
     """Test error raised when file does not exist in GCS."""
     mock_bucket = mock.MagicMock()
     mock_blob = mock.MagicMock()
-    mock_blob.download_to_filename.side_effect = google_exceptions.NotFound("File not found")
+    mock_blob.download_to_filename.side_effect = google_exceptions.NotFound(
+        "File not found"
+    )
     mock_client.return_value.bucket.return_value = mock_bucket
     mock_bucket.blob.return_value = mock_blob
 
@@ -122,7 +125,9 @@ class TestDownloadFileFromGCS(unittest.TestCase):
     """Test error raised when permissions are insufficient."""
     mock_bucket = mock.MagicMock()
     mock_blob = mock.MagicMock()
-    mock_blob.download_to_filename.side_effect = google_exceptions.Forbidden("Access Denied")
+    mock_blob.download_to_filename.side_effect = google_exceptions.Forbidden(
+        "Access Denied"
+    )
     mock_client.return_value.bucket.return_value = mock_bucket
     mock_bucket.blob.return_value = mock_blob
 
@@ -295,7 +300,9 @@ class TestUploadLocalFileToGoogleCloud(unittest.TestCase):
   @mock.patch("transcription_utils.storage.Client")
   def test_file_not_found_error(self, mock_client):
     """Test handling of FileNotFoundError if the source file does not exist."""
-    mock_client.return_value.bucket.return_value.blob.return_value = mock.MagicMock()
+    mock_client.return_value.bucket.return_value.blob.return_value = (
+        mock.MagicMock()
+    )
 
     with self.assertRaises(FileNotFoundError):
       transcription_utils.upload_local_file_to_google_cloud(
@@ -305,7 +312,9 @@ class TestUploadLocalFileToGoogleCloud(unittest.TestCase):
   @mock.patch("transcription_utils.storage.Client")
   def test_bucket_not_found_error(self, mock_client):
     """Test handling of NotFound error if the bucket does not exist."""
-    mock_client.return_value.bucket.side_effect = google_exceptions.NotFound("Bucket not found")
+    mock_client.return_value.bucket.side_effect = google_exceptions.NotFound(
+        "Bucket not found"
+    )
 
     with self.assertRaises(google_exceptions.NotFound):
       transcription_utils.upload_local_file_to_google_cloud(
@@ -344,7 +353,9 @@ class TestDetectLanguage(unittest.TestCase):
     mock_client_instance = mock.MagicMock()
     mock_translate_client.return_value = mock_client_instance
     mock_response = mock.MagicMock()
-    mock_response.languages = [mock.MagicMock(language_code="en", confidence=0.99)]
+    mock_response.languages = [
+        mock.MagicMock(language_code="en", confidence=0.99)
+    ]
     mock_client_instance.detect_language.return_value = mock_response
 
     result = transcription_utils.detect_language(

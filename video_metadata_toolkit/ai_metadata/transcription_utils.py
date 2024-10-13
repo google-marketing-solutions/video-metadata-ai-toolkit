@@ -25,7 +25,7 @@ import requests
 
 
 def download_video(video_url: str, local_video_path: str) -> str:
-  """Downloads a video from a specified URL to a local file, verifying that a video is downloaded.
+  """Downloads a video from a specified URL to a local file.
 
   Uses a browser-like User-Agent to potentially bypass web server
   restrictions on non-browser agents.
@@ -114,13 +114,13 @@ def download_file_from_gcs(gcs_uri: str, local_destination: str):
 
 
 def map_language_code(generic_code: str) -> str:
-  """Map generic language codes to specific locales supported by Speech-to-Text API.
+  """Map generic language codes to locales supported by Speech-to-Text API.
 
   Args:
-      generic_code (str): The two-letter ISO 639-1 language code.
+    generic_code (str): The two-letter ISO 639-1 language code.
 
   Returns:
-      str: A list containing a single, specific locale code. Defaults to British
+    str: A list containing a single, specific locale code. Defaults to British
       English.
   """
   language_mapping = {
@@ -146,11 +146,12 @@ def detect_language(text: str) -> list[str]:
       text (str): The string input to detect the language of.
 
   Returns:
-      list[str]: Either a list of just the top most likely language (1), or a list of all
+    list[str]: Either a list of just the top most likely language (1), or a
+      list of all
       the languages used. Defaults to British English.
   """
   if text is None or text == "":
-      return ["en-GB"]
+    return ["en-GB"]
   translate_client = translate.TranslationServiceClient()
 
   request = translate.DetectLanguageRequest(
@@ -180,15 +181,15 @@ def _extract_audio_from_local_file(
   """Extracts audio from a local video file using FFmpeg.
 
   Args:
-      local_file_path (str): The path to the local video file.
-      output_audio_file_directory (str): The directory to save the extracted
-        audio file.
+    local_file_path (str): The path to the local video file.
+    output_audio_file_directory (str): The directory to save the extracted
+      audio file.
 
   Returns:
-      str: Full path of the extracted audio file.
+    str: Full path of the extracted audio file.
 
   Raises:
-      subprocess.CalledProcessError: If FFmpeg fails to extract audio.
+    subprocess.CalledProcessError: If FFmpeg fails to extract audio.
   """
   video_file_name_with_extension = os.path.basename(local_file_path)
   audio_file_name = (
@@ -218,19 +219,19 @@ def _extract_audio_from_local_file(
 def _extract_audio_from_gcs(
     gcs_uri: str, output_audio_file_directory: str
 ) -> str:
-  """Downloads a video from GCS, extracts the audio using FFmpeg, and saves the audio file.
+  """Downloads a video from GCS and extracts the audio using FFmpeg.
 
   Args:
-      gcs_uri (str): The GCS URI of the video file (e.g.,
-        'gs://my-bucket/video.mp4').
-      output_audio_file_directory (str): The directory to save the extracted
-        audio file.
+    gcs_uri (str): The GCS URI of the video file (e.g.,
+      'gs://my-bucket/video.mp4').
+    output_audio_file_directory (str): The directory to save the extracted
+      audio file.
 
   Returns:
-      str: Full path of the extracted audio file.
+    str: Full path of the extracted audio file.
 
   Raises:
-      ValueError: If the download from GCS fails.
+    ValueError: If the download from GCS fails.
       subprocess.CalledProcessError: If FFmpeg fails to extract audio.
   """
   # Download the video from GCS and save locally, to then use local audio
@@ -254,19 +255,19 @@ def _extract_audio_from_gcs(
 def extract_audio_from_video(
     gcs_uri_or_local_file_path: str, output_audio_file_directory: str
 ) -> str:
-  """Extracts audio from a GCS URI or a local file path using ffmpeg and saves the new audio file.
+  """Extracts audio from a GCS URI or a local file path using ffmpeg.
 
   Args:
-      gcs_uri_or_local_file_path (str): GCS URI (e.g.,
-        'gs://my-bucket/video.mp4') or local file path.
-      output_audio_file_directory (str): The name of the directory in which to
-        save the audio file.
+    gcs_uri_or_local_file_path (str): GCS URI (e.g.,
+      'gs://my-bucket/video.mp4') or local file path.
+    output_audio_file_directory (str): The name of the directory in which to
+      save the audio file.
 
   Returns:
-      str: Full path of the extracted audio file.
+    str: Full path of the extracted audio file.
 
   Raises:
-      FileNotFoundError: If the specified file does not exist in GCS or locally.
+    FileNotFoundError: If the specified file does not exist in GCS or locally.
       subprocess.CalledProcessError: If FFmpeg fails to extract audio.
   """
   local_output_audio_file_full_path = None
@@ -297,18 +298,18 @@ def upload_local_file_to_google_cloud(
   """Uploads a file to the Google Cloud Storage bucket.
 
   Args:
-      bucket_name (str): The name of the GCS bucket to upload to.
-      source_file (str): The local path of the file to upload.
-      destination_blob (str): The name to give the uploaded file in GCS.
+    bucket_name (str): The name of the GCS bucket to upload to.
+    source_file (str): The local path of the file to upload.
+    destination_blob (str): The name to give the uploaded file in GCS.
 
   Returns:
-      str: The GCS URI of the uploaded file if successful.
+    str: The GCS URI of the uploaded file if successful.
 
   Raises:
-      FileNotFoundError: If the local file does not exist.
-      NotFound: If the GCS bucket does not exist.
-      Forbidden: If there's a permission issue accessing the GCS bucket.
-      Exception: For general errors during the upload process.
+    FileNotFoundError: If the local file does not exist.
+    NotFound: If the GCS bucket does not exist.
+    Forbidden: If there's a permission issue accessing the GCS bucket.
+    Exception: For general errors during the upload process.
   """
   print(
       f"Uploading to GCP - bucket_name = {bucket_name}, source_file ="
@@ -347,12 +348,12 @@ def _transcribe_from_local_file(local_path: str, languages=["en-GB"]) -> str:
   """Transcribes a local audio file and returns the text.
 
   Args:
-      local_path (str): The local path of the audio file to transcribe.
-      languages (list): The languages to use for transcription. Defaults to
-        British English.
+    local_path (str): The local path of the audio file to transcribe.
+    languages (list): The languages to use for transcription. Defaults to
+      British English.
 
   Returns:
-      str: The transcribed text.
+    str: The transcribed text.
   """
   speech_client = speech.SpeechClient()
   print(f"In transcribe_from_local_file - local_path={local_path}")
@@ -385,13 +386,13 @@ def _transcribe_from_gcs(gcs_uri: str, languages=["en-GB"]) -> str:
   """Transcribes an audio file located on Google Cloud Storage.
 
   Args:
-      gcs_uri: The GCS URI of the audio file to transcribe (e.g.,
-        'gs://my-bucket/audio.wav').
-      languages: The languages to use for transcription. Defaults to British
-        English.
+    gcs_uri: The GCS URI of the audio file to transcribe (e.g.,
+      'gs://my-bucket/audio.wav').
+    languages: The languages to use for transcription. Defaults to British
+      English.
 
   Returns:
-      str: The transcribed text from the audio file.
+    str: The transcribed text from the audio file.
   """
   audio = speech.RecognitionAudio(uri=gcs_uri)
 
@@ -424,18 +425,18 @@ def transcribe_audio(
   """Transcribes audio from a GCS URI or a local file path.
 
   Args:
-      gcs_uri_or_local_file_path (str): GCS URI (e.g.,
-        'gs://my-bucket/audio.wav') or local file path.
-      languages (list): The languages to use for transcription. Defaults to
-        British English.
-      output_filename (str, optional): The name of the file to save the
-        transcription. Defaults to None.
+    gcs_uri_or_local_file_path (str): GCS URI (e.g.,
+      'gs://my-bucket/audio.wav') or local file path.
+    languages (list): The languages to use for transcription. Defaults to
+      British English.
+    output_filename (str, optional): The name of the file to save the
+      transcription. Defaults to None.
 
   Returns:
-      str: The path where the transcript is stored locally.
+    str: The path where the transcript is stored locally.
 
   Raises:
-      FileNotFoundError: If the specified file does not exist in GCS or locally.
+    FileNotFoundError: If the specified file does not exist in GCS or locally.
   """
   if gcs_uri_or_local_file_path.startswith("gs://"):
     try:

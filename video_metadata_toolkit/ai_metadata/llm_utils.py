@@ -157,21 +157,21 @@ def _get_prompt(video: Video, attribute_to_generate: str) -> str:
 
 
 def call_llm(video: Video, attribute_to_generate: str) -> Any:
-  """Calls the LLM with the appropriate prompt to generate the specified attribute.
+  """Calls the LLM with the appropriate prompt.
 
   Args:
-      video (Video): The Video object to generate the attribute for.
-      attribute_to_generate (str): The type of attribute to generate (e.g.,
-        "generate_metadata", "generate_summary", "generate_title_options",
-        "generate_external_summary").
+    video (Video): The Video object to generate the attribute for.
+    attribute_to_generate (str): The type of attribute to generate (e.g.,
+      "generate_metadata", "generate_summary", "generate_title_options",
+      "generate_external_summary").
 
   Returns:
-      Any: The LLM generated attribute. The exact type of return value depends
+    Any: The LLM generated attribute. The exact type of return value depends
       on the attribute to generate. For example, a string for summaries or a
       list of strings for title options.
 
   Raises:
-      ValueError: If the attribute_to_generate is not recognized or supported.
+    ValueError: If the attribute_to_generate is not recognized or supported.
   """
   vertexai.init(project=project_configs.PROJECT_ID, location="us-central1")
   model = GenerativeModel("gemini-1.5-pro-preview-0409")

@@ -20,23 +20,23 @@ import transcription_utils
 class Video:
   """Represents a video, storing its metadata and  AI-generated metadata.
 
-    id (str): Unique identifier for the video.
-    title (str, optional): The title of the video.
-    uri (str): The URI where the video is located.
-    description (str, optional): A description of the video (default: None).
-    metadata (dict, optional): Additional metadata associated with the video
+  id (str): Unique identifier for the video.
+  title (str, optional): The title of the video.
+  uri (str): The URI where the video is located.
+  description (str, optional): A description of the video (default: None).
+  metadata (dict, optional): Additional metadata associated with the video
     (default: {}).
-    transcript (str, optional): A transcription of the video's audio (default:
+  transcript (str, optional): A transcription of the video's audio (default:
     None).
-    summary (str, optional): A concise summary of the video's content (default:
+  summary (str, optional): A concise summary of the video's content (default:
     None).
-    aiGeneratedMetadata (dict, optional): Metadata extracted or enhanced by AI
+  aiGeneratedMetadata (dict, optional): Metadata extracted or enhanced by AI
     (default: None).
-    aiGeneratedMetdataWithCelebrity (dict, optional): AI-generated metadata
+  aiGeneratedMetadataWithCelebrity (dict, optional): AI-generated metadata
     focusing on celebrities mentioned in the video (default: None).
-    duration (float): The duration of the video in seconds, determined by
+  duration (float): The duration of the video in seconds, determined by
     `detect_duration`.
-    languages (list[str]): A list of detected languages in the video title,
+  languages (list[str]): A list of detected languages in the video title,
     determined by `transcription_utils.detect_language`.
   """
 
@@ -65,7 +65,7 @@ class Video:
     self.languages = transcription_utils.detect_language(title)
     self.transcript = transcript
     self.summary = summary
-    self.ai_suggested_titles= ai_suggested_titles
+    self.ai_suggested_titles = ai_suggested_titles
     self.ai_suggested_external_summary = ai_suggested_external_summary
     # Metadata
     self.ai_generated_metadata = ai_generated_metadata

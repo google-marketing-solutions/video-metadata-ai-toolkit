@@ -17,6 +17,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import video_celebrity_detection as vcd
 
+
 class TestVideoCelebrityDetection(unittest.TestCase):
   """Tests for the video_celebrity_detection module."""
 
@@ -30,22 +31,22 @@ class TestVideoCelebrityDetection(unittest.TestCase):
     mock_post.return_value = mock_response
 
     result = vcd.execute_celebrity_detection(
-      "gs://input_video.mp4", "gs://output_json.json", "123456789"
+        "gs://input_video.mp4", "gs://output_json.json", "123456789"
     )
 
     mock_post.assert_called_once_with(
-      url="https://videointelligence.googleapis.com/v1p3beta1/videos:annotate",
-      json={
-        "inputUri": "gs://input_video.mp4",
-        "outputUri": "gs://output_json.json",
-        "features": ["CELEBRITY_RECOGNITION"]
-      },
-      headers={
-        "Authorization": "Bearer mock_access_token",
-        "x-goog-user-project": "123456789",
-        "Content-Type": "application/json; charset=utf-8"
-      },
-      timeout=20
+        url="https://videointelligence.googleapis.com/v1p3beta1/videos:annotate",
+        json={
+            "inputUri": "gs://input_video.mp4",
+            "outputUri": "gs://output_json.json",
+            "features": ["CELEBRITY_RECOGNITION"],
+        },
+        headers={
+            "Authorization": "Bearer mock_access_token",
+            "x-goog-user-project": "123456789",
+            "Content-Type": "application/json; charset=utf-8",
+        },
+        timeout=20,
     )
     self.assertEqual(result, '{"name": "test_operation_name"}')
 
@@ -56,7 +57,7 @@ class TestVideoCelebrityDetection(unittest.TestCase):
     mock_get.return_value.text = '{"annotationResults": []}'
 
     result = vcd.result_celebrity_detection(
-      "projects/test_project/locations/us-east1/operations/test_operation"
+        "projects/test_project/locations/us-east1/operations/test_operation"
     )
     self.assertEqual(result, '{"annotationResults": []}')
 
@@ -70,13 +71,16 @@ class TestVideoCelebrityDetection(unittest.TestCase):
     with self.assertRaises(ValueError):
       vcd.get_project_num(invalid_result_name)
 
- @patch("requests.post")  
+  @patch("requests.post")
   def test_valid_uris(self, mock_post):
-    mock_post.return_value.text = "{}" 
+    mock_post.return_value.text = "{}"
 
     valid_cases = [
-      ("gs://my-bucket/input.mp4", "gs://another-bucket/output.json"),
-      ("gs://long-bucket-name/path/to/video.mov", "gs://my-project/results.json"),
+        ("gs://my-bucket/input.mp4", "gs://another-bucket/output.json"),
+        (
+            "gs://long-bucket-name/path/to/video.mov",
+            "gs://my-project/results.json",
+        ),
     ]
 
     for input_uri, output_uri in valid_cases:
@@ -87,10 +91,10 @@ class TestVideoCelebrityDetection(unittest.TestCase):
   @patch("requests.post")
   def test_invalid_uris(self, mock_post):
     invalid_cases = [
-      ("", "gs://output.json"),
-      ("gs://input", ""),
-      ("invalid-uri", "gs://output.json"),
-      ("gs://input", "http://not-gs.com"),
+        ("", "gs://output.json"),
+        ("gs://input", ""),
+        ("invalid-uri", "gs://output.json"),
+        ("gs://input", "http://not-gs.com"),
     ]
 
     for input_uri, output_uri in invalid_cases:
