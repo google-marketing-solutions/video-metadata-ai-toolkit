@@ -14,55 +14,50 @@
 
 import shlex
 import subprocess
-import transcription_utils
 
 
 class Video:
   """Represents a video, storing its metadata and  AI-generated metadata.
 
-  id (str): Unique identifier for the video.
-  title (str, optional): The title of the video.
-  uri (str): The URI where the video is located.
-  description (str, optional): A description of the video (default: None).
-  metadata (dict, optional): Additional metadata associated with the video
-    (default: {}).
-  transcript (str, optional): A transcription of the video's audio (default:
-    None).
-  summary (str, optional): A concise summary of the video's content (default:
-    None).
-  aiGeneratedMetadata (dict, optional): Metadata extracted or enhanced by AI
-    (default: None).
-  aiGeneratedMetadataWithCelebrity (dict, optional): AI-generated metadata
+  video_id: Unique identifier for the video.
+  uri: The URI where the video is located.
+  title: The title of the video.
+  description: A description of the video.
+  metadata: Additional metadata associated with the video.
+  transcript: A transcription of the video's audio.
+  summary: A concise summary of the video's content.
+  languages: A list of languages associated with the content.
+  duration: The duration of the video in seconds.
+  ai_generated_metadata: Metadata extracted or enhanced by AI.
+  ai_generated_metadata_with_celebrity: AI-generated metadata
     focusing on celebrities mentioned in the video (default: None).
-  duration (float): The duration of the video in seconds, determined by
-    `detect_duration`.
-  languages (list[str]): A list of detected languages in the video title,
-    determined by `transcription_utils.detect_language`.
   """
 
   def __init__(
       self,
-      id,
-      uri,
-      title=None,
-      description=None,
-      metadata=None,
-      transcript=None,
-      summary=None,
-      ai_generated_metadata=None,
-      ai_suggested_titles=None,
-      ai_generated_metadata_with_celebrity=None,
-      ai_suggested_external_summary=None,
+      video_id: str,
+      uri: str | None,
+      title: str | None = None,
+      description: str | None = None,
+      metadata: str | None = None,
+      transcript: str | None = None,
+      summary: str | None = None,
+      languages: str | None = None,
+      duration: str | None = None,
+      ai_generated_metadata: str | None = None,
+      ai_suggested_titles: str | None = None,
+      ai_generated_metadata_with_celebrity: str | None = None,
+      ai_suggested_external_summary: str | None = None,
   ):
     # From MRSS
-    self.id = id
+    self.video_id = video_id
     self.title = title
     self.description = description
     self.uri = uri
-    self.duration = self.detect_duration(self.uri)
+    self.duration = duration
     self.metadata = metadata if metadata else {}
     # AI Generated
-    self.languages = transcription_utils.detect_language(title)
+    self.languages = languages
     self.transcript = transcript
     self.summary = summary
     self.ai_suggested_titles = ai_suggested_titles
@@ -73,20 +68,21 @@ class Video:
         ai_generated_metadata_with_celebrity
     )
 
-  def detect_duration(self, video_uri: str) -> float:
-    """Uses ffmpeg to retrieve the duration of a video from a given URI by executing a subprocess.
+  def detect_duration(self) -> float:
+    """Returns the duration of the video.
 
-    Args:
-      video_uri: The URI of the video file.
+    If duration is unknown, ffmpeg will be used to calculate the value.
 
     Returns:
-        The duration of the video in seconds as a float. Returns -1.0 if there
+      The duration of the video in seconds. Returns -1.0 if there
         is an error.
     """
+    if self.duration:
+      return self.duration
     # Command to get video duration using ffprobe, which is part of the ffmpeg suite
     command = (
         "ffprobe -v error -show_entries format=duration -of"
-        f" default=noprint_wrappers=1:nokey=1 {shlex.quote(video_uri)}"
+        f" default=noprint_wrappers=1:nokey=1 {shlex.quote(self.uri)}"
     )
     try:
       # Execute the command
@@ -99,6 +95,7 @@ class Video:
       # Check if the command was successful
       if result.returncode == 0:
         # Return the duration as a float
+        self.duration = result
         return float(result.stdout.strip())
       else:
         print(f"Error fetching video duration: {result.stderr}")

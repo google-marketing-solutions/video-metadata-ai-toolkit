@@ -27,7 +27,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = "metadata_response"
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",
@@ -45,7 +45,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = "summary_response"
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",
@@ -65,7 +65,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = '["Title 1", "Title 2"]'
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",
@@ -85,7 +85,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = "external_summary_response"
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",
@@ -100,7 +100,7 @@ class TestCallLLM(unittest.TestCase):
 
   def test_invalid_attribute(self):
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",
@@ -116,7 +116,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = "metadata_response"
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="",
@@ -135,7 +135,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = "metadata_response"
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript=long_transcript,
@@ -155,7 +155,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.side_effect = Exception("Connection error")
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",
@@ -175,7 +175,7 @@ class TestCallLLM(unittest.TestCase):
     mock_generate_content.return_value.text = '["Title 1", "Title 2'
 
     video = Video(
-        id="123",
+        video_id="123",
         uri="http://example.com/video.mp4",
         title="Test Title",
         transcript="Test Transcript",

@@ -201,6 +201,7 @@ def call_llm(video: Video, attribute_to_generate: str) -> Any:
     return response.text.strip()
   except Exception as e:
     print(
-        f"Failed to generate {attribute_to_generate} for video {video.id}: {e}"
+        f"Failed to generate {attribute_to_generate} for video"
+        f" {video.video_id}: {e}"
     )
     return ""

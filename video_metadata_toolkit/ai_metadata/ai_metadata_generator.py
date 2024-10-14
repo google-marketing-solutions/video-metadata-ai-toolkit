@@ -11,118 +11,61 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Module to process video files and generate AI attributes.
 
-"""Entry point for Video AI Metadata Generator project."""
+When run from the CLI, this module can be used to processes a video with
+artificial intelligence to generate metadata related to the content. Depending
+on the input data, this module can generate transcripts, descriptions,
+summaries, keyword metadata, title suggestions, and external summaries.
 
-import logging
-import os
-import re
-from typing import Any, Optional
+Most of the generated content requires a transcript so if there is not one
+provided it will be generated.
+
+usage: ai_metadata_generator.py [-h] [--video_id VIDEO_ID] [--title TITLE]
+  [--metadata METADATA] video_uri
+
+positional arguments:
+  video_uri            The URI of the video to be processed.
+
+options:
+  -h, --help           show this help message and exit
+  --video_id VIDEO_ID  The unique identifier of the video. If not provided,
+                        it will be extracted from the video URI.
+  --title TITLE        User provided title for the video. Defaults to an
+                        empty string
+  --metadata METADATA  User provided metadata associated with the video.
+                        Defaults to anempty string.
+"""
+
+import argparse
+import copy
+import string
+import sys
+from typing import Sequence
 
 import llm_utils
 import project_configs
 import transcription_utils
-from video_class import Video
+import video_class
 
 
-def _get_video_id_from_url(video_url: str) -> Optional[str]:
-  """Extracts and returns a video ID from a URL based on a predefined pattern.
-
-  This function specifically checks if the URL contains 'bcboltbde696aa' to
-  determine if it should proceed with extraction. If the URL matches this
-  criterion, the function uses a regex pattern to find and return a UUID-like
-  segment which represents the video ID. This segment is expected to be in a
-  specific format and position within the URL path.
-
-  Note:
-   The URL pattern is expected to be like:
-    'https://bcboltbde696aa-a.akamaihd.net/media/v1/pmp4/static/clear/<numeric-segment>/<UUID-like-segment>/...'
-    where '<numeric-segment>' is a placeholder for any numeric value and
-    '<UUID-like-segment>' is the expected video ID to be extracted.
-
-  Args:
-    video_url (str): The URL from which the video ID should be extracted.
-
-  Returns:
-    str or None: The extracted video ID if found, otherwise None if the URL does
-    not contain 'bcboltbde696aa' or if no ID is found following the expected
-    pattern.
-  """
-  if "bcboltbde696aa" in video_url:
-    # Only works for the videos which start like this URL:
-    pattern = r"https://bcboltbde696aa-a.akamaihd.net/media/v1/pmp4/static/clear/\d+/([^/]+)"
-    match = re.search(pattern, video_url)
-    if match:
-      return match.group(1)  # Returns the captured UUID-like segment
-  return None
-
-
-def _get_transcription_from_video(
-    video: Video, audio_bucket_name: str, transcript_bucket_name: str
-) -> Optional[str]:
-  """Gets a transcript from a video.
-
-  Args:
-    video (Video): The Video object to get the transcription for.
-    audio_bucket_name (str): Name of the audio bucket in Google Cloud Storage.
-    transcript_bucket_name (str): Name of the transcript bucket in Google Cloud
-      Storage.
-
-  Returns:
-    The text of the transcript, or None if the transcription fails.
-  """
-  video_uri = video.uri
-  video_id = video.id
-  languages = video.languages
-  local_video_file_path = os.path.join("./vids/", video_id + "_tmp_vid.mp4")
-
-  if video_uri.startswith("https://") or video_uri.startswith("gs://"):
-    if not os.path.exists(local_video_file_path):
-      try:
-        # 1. Download video locally
-        local_video_file_path = transcription_utils.download_video(
-            video_uri, local_video_file_path
-        )
-      except Exception as e:
-        logging.error(f"Failed to process video {video_id}: {e}")
-        return None
-    else:
-      # Video is already downloaded.
-      local_transcript_filename = os.path.join(
-          "./transcriptions/", video_id + "_transcription.txt"
-      )
-      with open(local_transcript_filename, "r") as file:
-        transcript = file.read()
-      return transcript
-
-  # Else it is a local file.
-  else:
-    local_video_file_path = video_uri
-  # 2. Strip the audio using ffmpeg
-  local_audio_file_path = transcription_utils.extract_audio_from_video(
-      local_video_file_path, "./audios"
+def _create_video_id_from_uri(uri: str):
+  """Replaces punctuation in a URI with underscores to create an ID."""
+  chars_to_replace = string.punctuation + " "
+  translator = str.maketrans(
+      string.punctuation + " ", "_" * len(chars_to_replace)
   )
-  # 3. Upload the audio file to GCP
-  audio_file_cloud_uri = transcription_utils.upload_local_file_to_google_cloud(
-      audio_bucket_name, local_audio_file_path, f"{video_id}.wav"
-  )
-  # 4. Create the transcript
-  local_transcript_filename = transcription_utils.transcribe_audio(
-      audio_file_cloud_uri, languages
-  )
-  with open(local_transcript_filename, "r") as file:
-    transcript = file.read()
-  print(transcript)
-  return transcript
+  return uri.translate(translator)
 
 
-def _add_ai_attributes_to_video(
-    video: Video, audio_bucket_name: str, transcript_bucket_name: str
-) -> None:
+def add_ai_attributes_to_video(
+    video: video_class.Video,
+    audio_bucket_name: str = project_configs.AUDIO_BUCKET_NAME,
+) -> video_class.Video:
   """Enhances a Video object with AI-generated attributes.
 
   This function performs the following steps:
-  1. Retrieves the transcript of the video and assigns it to the video object.
+  1. Retrieves the transcript of the video (creating one, if necessary).
   2. Checks if the transcript length is sufficient and the video duration is
     below a threshold.
   3. Generates and assigns a summary of the video using an AI model.
@@ -131,78 +74,109 @@ def _add_ai_attributes_to_video(
   6. Generates and assigns an AI-suggested external summary for the video.
 
   Args:
-    video (Video): The Video object to be enhanced with AI-generated attributes.
-    audio_bucket_name (str): The name of the audio bucket in Google Cloud
-      Storage.
-    transcript_bucket_name (str): The name of the transcript bucket in Google
-      Cloud Storage.
+    video: The Video object to be enhanced with AI-generated attributes.
+    audio_bucket_name: The name of the bucker in Google Cloud Storage where
+      extracted audio files should be stored.
 
   Returns:
-    None
+    The video instance with additional AI attributes.
 
   Raises:
     IOError: If there is an issue with retrieving or processing the transcript.
   """
-  video.transcript = _get_transcription_from_video(
-      video,
-      audio_bucket_name,
-      transcript_bucket_name,
-  )
+  if not video.transcript:
+    video.transcript = transcription_utils.get_transcript_from_video(
+        video,
+        audio_bucket_name,
+    )
+
+  video_copy = copy.deepcopy(video)
   # If the transcript is not long enough (<100 characters), or
   # the video is too long (> 40 minutes), do not proceed with genAI.
-  if len(video.transcript) > 100 and video.duration < 2400:
-    video.summary = llm_utils.call_llm(video, "generate_summary")
-    video.ai_generated_metadata = llm_utils.call_llm(video, "generate_metadata")
-    print("ai_generated_metadata=", video.ai_generated_metadata)
-    video.ai_suggested_titles = llm_utils.call_llm(
-        video, "generate_title_options"
+  if len(video.transcript) > 100 and video.detect_duration() < 2400:
+    video_copy.summary = llm_utils.call_llm(video_copy, "generate_summary")
+    video_copy.ai_generated_metadata = llm_utils.call_llm(
+        video_copy, "generate_metadata"
     )
-    video.ai_suggested_external_summary = llm_utils.call_llm(
-        video, "generate_external_summary"
+    video_copy.ai_suggested_titles = llm_utils.call_llm(
+        video_copy, "generate_title_options"
     )
+    video_copy.ai_suggested_external_summary = llm_utils.call_llm(
+        video_copy, "generate_external_summary"
+    )
+  return video_copy
 
 
-def main(
-    video_id,
-    video_url,
-    metadata="",
-    video_title="",
-    audio_bucket_name=project_configs.AUDIO_BUCKET_NAME,
-    transcript_bucket_name=project_configs.TRANSCRIPT_BUCKET_NAME,
-) -> Video:
-  """Main function to process a video and generate AI attributes.
-
-  This function processes a video by generating its AI attributes, such as
-  transcript, summary, metadata, title suggestions, and external summary. It
-  takes video details as input, processes the video, and returns a Video object
-  with the generated attributes.
+def _parse_args(args: Sequence[str]) -> argparse.Namespace:
+  """Parses command line arguments for ai_metadata_generator.
 
   Args:
-    video_id (str): The unique identifier of the video. If not provided, it will
-      be extracted from the video URL.
-    video_url (str): The URL of the video to be processed.
-    metadata (str, optional): Metadata associated with the video. Defaults to an
-      empty string.
-    video_title (str, optional): The title of the video. Defaults to an empty
-      string.
-    audio_bucket_name (str, optional): The name of the audio bucket in Google
-      Cloud Storage. Defaults to project_configs.AUDIO_BUCKET_NAME.
-    transcript_bucket_name (str, optional): The name of the transcript bucket in
-      Google Cloud Storage. Defaults to project_configs.TRANSCRIPT_BUCKET_NAME.
+    args: The command line arguments.
 
   Returns:
-    Video: The processed Video object with generated AI attributes.
-
-  Raises:
-    ValueError: If no video URL is specified.
+    The parsed arguments.
   """
-  if not video_url:
+
+  argparser = argparse.ArgumentParser(
+      description="Describes video content using AI."
+  )
+  argparser.add_argument(
+      "video_uri",
+      type=str,
+      help="The URI of the video to be processed.",
+  )
+  argparser.add_argument(
+      "--video_id",
+      type=str,
+      default=None,
+      help=(
+          "The unique identifier of the video. If not provided, it will be"
+          "extracted from the video URI."
+      ),
+  )
+  argparser.add_argument(
+      "--title",
+      type=str,
+      default="",
+      help="User provided title for the video. Defaults to an empty string",
+  )
+  argparser.add_argument(
+      "--metadata",
+      type=str,
+      default="",
+      help=(
+          "User provided metadata associated with the video. Defaults to an"
+          "empty string."
+      ),
+  )
+  return argparser.parse_args(args)
+
+
+def main(args=sys.argv[1:]):
+  """Entry point for command line interface.
+
+  Args:
+    args: The command line arguments. Provided by default, but can be passed
+      manually to enable easier testing.
+  """
+  arguments = _parse_args(args)
+  if not arguments.video_uri:
     raise ValueError("No video URL specified.")
 
-  video_id = video_id or _get_video_id_from_url(video_url)
-  video = Video(video_id, uri=video_url, metadata=metadata, title=video_title)
-  _add_ai_attributes_to_video(video, audio_bucket_name, transcript_bucket_name)
-  return video
+  video_id = arguments.video_id or _create_video_id_from_uri(
+      arguments.video_uri
+  )
+  video = video_class.Video(
+      video_id,
+      uri=arguments.video_uri,
+      metadata=arguments.metadata,
+      title=arguments.title,
+  )
+  video = add_ai_attributes_to_video(
+      video,
+      project_configs.AUDIO_BUCKET_NAME,
+  )
+  print(f"AI Generated Metadata:\n{video.ai_generated_metadata}")
 
 
 if __name__ == "__main__":

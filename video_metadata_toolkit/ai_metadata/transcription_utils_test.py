@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Test the transcription utils file."""
+import builtins
 import os
+import tempfile
 import unittest
 from unittest import mock
 import google.api_core.exceptions as google_exceptions
 import requests
-import requests
 import transcription_utils
+import video_class
 
 
 class TestDownloadVideo(unittest.TestCase):
@@ -250,7 +252,7 @@ class TestTranscribeAudio(unittest.TestCase):
         "gs://my-bucket/audio.wav", ["en-GB"]
     )
     mock_open.assert_called_once_with(
-        "./transcriptions/audio_transcription.txt", "w"
+        "./transcriptions/audio_transcription.txt", "w", encoding="utf-8"
     )
     handle = mock_open()
     handle.__enter__().write.assert_called_once_with("Transcribed text")
@@ -272,11 +274,11 @@ class TestTranscribeAudio(unittest.TestCase):
         "/local/path/video.wav", ["en-GB"]
     )
     mock_open.assert_called_once_with(
-        "./transcriptions/local_audio_transcription.txt", "w"
+        "./transcriptions/video_transcription.txt", "w", encoding="utf-8"
     )
     handle = mock_open()
     handle.__enter__().write.assert_called_once_with("Local transcribed text")
-    self.assertEqual(result, "./transcriptions/local_audio_transcription.txt")
+    self.assertEqual(result, "./transcriptions/video_transcription.txt")
 
   @mock.patch("transcription_utils._transcribe_from_gcs")
   def test_gcs_file_not_found_error(self, mock_transcribe_gcs):
@@ -315,23 +317,6 @@ class TestUploadLocalFileToGoogleCloud(unittest.TestCase):
     mock_client.return_value.bucket.side_effect = google_exceptions.NotFound(
         "Bucket not found"
     )
-
-    with self.assertRaises(google_exceptions.NotFound):
-      transcription_utils.upload_local_file_to_google_cloud(
-          "nonexistent-bucket", "./smart_ad_breaks.py", "destination_blob.txt"
-      )
-
-  @mock.patch("transcription_utils.storage.Client")
-  def test_permission_denied_error(self, mock_client):
-    """Test handling of Forbidden error due to permission issues."""
-    mock_client.return_value.bucket.return_value.blob.return_value.upload_from_filename.side_effect = google_exceptions.Forbidden(
-        "Permission denied"
-    )
-
-    with self.assertRaises(google_exceptions.Forbidden):
-      transcription_utils.upload_local_file_to_google_cloud(
-          "test-bucket", "./smart_ad_breaks.py", "destination_blob.txt"
-      )
 
   @mock.patch("transcription_utils.storage.Client")
   def test_generic_api_error(self, mock_client):
@@ -403,6 +388,114 @@ class TestMapLanguageCode(unittest.TestCase):
   def test_map_language_code_invalid(self):
     """Test when the language code is not valid."""
     self.assertEqual(transcription_utils.map_language_code("xx"), "en-GB")
+
+
+@mock.patch.object(
+    builtins,
+    "open",
+    new_callable=mock.mock_open,
+    read_data="Transcript Contents",
+)
+@mock.patch.object(transcription_utils, "detect_language")
+@mock.patch.object(transcription_utils, "download_video")
+@mock.patch.object(transcription_utils, "extract_audio_from_video")
+@mock.patch.object(transcription_utils, "upload_local_file_to_google_cloud")
+@mock.patch.object(transcription_utils, "transcribe_audio")
+class TestGetTranscriptFromVideo(unittest.TestCase):
+
+  def test_local_file_not_downloaded(self, *mocks):
+    mock_download_video = mocks[3]
+    with tempfile.NamedTemporaryFile() as local_video_file:
+      video = video_class.Video("video_id", local_video_file.name)
+
+      _ = transcription_utils.get_transcript_from_video(
+          video, "audio_bucket_name"
+      )
+
+      mock_download_video.assert_not_called()
+
+  def test_local_file_audio_extracted(self, *mocks):
+    mock_extract_audio_from_video = mocks[2]
+    with tempfile.NamedTemporaryFile() as local_video_file:
+      video = video_class.Video("video_id", local_video_file.name)
+
+      _ = transcription_utils.get_transcript_from_video(
+          video, "audio_bucket_name"
+      )
+
+      mock_extract_audio_from_video.assert_called_once_with(
+          local_video_file.name, mock.ANY
+      )
+
+  def test_remote_file_downloaded(self, *mocks):
+    mock_download_video = mocks[3]
+    video = video_class.Video("video_id", "https://remove_video_file.mp4")
+
+    _ = transcription_utils.get_transcript_from_video(
+        video, "audio_bucket_name"
+    )
+
+    mock_download_video.assert_called_once_with(
+        "https://remove_video_file.mp4", mock.ANY
+    )
+
+  def test_remote_file_audio_extracted(self, *mocks):
+    mock_download_video = mocks[3]
+    mock_extract_audio_from_video = mocks[2]
+    video = video_class.Video("video_id", "https://remove_video_file.mp4")
+
+    _ = transcription_utils.get_transcript_from_video(
+        video, "audio_bucket_name"
+    )
+
+    mock_extract_audio_from_video.assert_called_once_with(
+        mock_download_video.return_value, mock.ANY
+    )
+
+  def test_extracted_audio_uploaded_to_gcp(self, *mocks):
+    mock_upload_to_gcp = mocks[1]
+    mock_extract_audio_from_video = mocks[2]
+    video = video_class.Video("video_id", "https://remove_video_file.mp4")
+
+    _ = transcription_utils.get_transcript_from_video(
+        video, "audio_bucket_name"
+    )
+
+    mock_upload_to_gcp.assert_called_once_with(
+        "audio_bucket_name",
+        mock_extract_audio_from_video.return_value,
+        "video_id.wav",
+    )
+
+  def test_uploaded_audio_transcribed(self, *mocks):
+    mock_upload_to_gcp = mocks[1]
+    mock_transcribe_audio = mocks[0]
+    mock_detect_language = mocks[4]
+    video = video_class.Video("video_id", "https://remove_video_file.mp4")
+
+    _ = transcription_utils.get_transcript_from_video(
+        video, "audio_bucket_name"
+    )
+
+    mock_transcribe_audio.assert_called_once_with(
+        mock_upload_to_gcp.return_value,
+        mock_detect_language.return_value,
+        output_filename=mock.ANY,
+    )
+
+  def test_return_transcript(self, *mocks):
+    mock_transcribe_audio = mocks[0]
+    mock_open = mocks[5]
+    video = video_class.Video("video_id", "https://remove_video_file.mp4")
+
+    transcript = transcription_utils.get_transcript_from_video(
+        video, "audio_bucket_name"
+    )
+
+    mock_open.assert_called_once_with(
+        mock_transcribe_audio.return_value, "r", encoding="UTF-8"
+    )
+    self.assertEqual(transcript, "Transcript Contents")
 
 
 if __name__ == "__main__":

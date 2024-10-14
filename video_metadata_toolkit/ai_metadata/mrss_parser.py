@@ -49,7 +49,7 @@ def parse_mrss(mrss_url: str) -> List[Video]:
         metadata = entry.get("media_tags")
         if video_id and media_url:
           video = Video(
-              id=video_id,
+              video_id=video_id,
               title=title,
               uri=media_url,
               metadata=metadata,

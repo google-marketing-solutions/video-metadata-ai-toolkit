@@ -16,12 +16,15 @@
 
 import os
 import subprocess
+import tempfile
+
 import google.api_core.exceptions as google_exceptions
 import google.cloud.speech as speech
 import google.cloud.storage as storage
 import google.cloud.translate_v3 as translate
 import project_configs
 import requests
+import video_class
 
 
 def download_video(video_url: str, local_video_path: str) -> str:
@@ -323,10 +326,6 @@ def upload_local_file_to_google_cloud(
 
     blob = client.bucket(bucket_name).blob(destination_blob)
     blob.upload_from_filename(source_file)
-    print(
-        f"Uploading to GCP - bucket_name = {bucket_name}, source_file ="
-        f" {source_file}, destination_blob = {destination_blob}"
-    )
     gcs_uri = f"gs://{bucket_name}/{destination_blob}"
     print(f"File uploaded successfully to {gcs_uri}")
     return gcs_uri
@@ -438,35 +437,68 @@ def transcribe_audio(
   Raises:
     FileNotFoundError: If the specified file does not exist in GCS or locally.
   """
-  if gcs_uri_or_local_file_path.startswith("gs://"):
-    try:
+  base_name = os.path.basename(gcs_uri_or_local_file_path)
+  local_transcript_file_path = output_filename or (
+      f"./transcriptions/{os.path.splitext(base_name)[0]}_transcription.txt"
+  )
+  try:
+    if gcs_uri_or_local_file_path.startswith("gs://"):
       transcript = _transcribe_from_gcs(gcs_uri_or_local_file_path, languages)
-      base_name = os.path.basename(gcs_uri_or_local_file_path)
-      local_transcript_file_path = os.path.join(
-          "./transcriptions/",
-          f"{os.path.splitext(base_name)[0]}_transcription.txt",
-      )
-      with open(local_transcript_file_path, "w") as file:
-        file.write(transcript)
-        print(f"Text content saved to {local_transcript_file_path}")
-    except FileNotFoundError:
-      print(f"GCS object not found: {gcs_uri_or_local_file_path}")
-      raise
-  else:
-    try:
+    else:
       transcript = _transcribe_from_local_file(
           gcs_uri_or_local_file_path, languages
       )
-      if output_filename is None:
-        output_filename = f"{os.path.splitext(os.path.basename(gcs_uri_or_local_file_path))[0]}_transcription.txt"
-      local_transcript_file_path = os.path.join(
-          "./transcriptions/", output_filename
-      )
-      with open(local_transcript_file_path, "w") as file:
-        file.write(transcript)
-        print(f"Text content saved to {local_transcript_file_path}")
-    except FileNotFoundError as e:
-      print(f"Local file not found: {gcs_uri_or_local_file_path}")
-      raise e
+    with open(local_transcript_file_path, "w", encoding="utf-8") as file:
+      file.write(transcript)
+      print(f"Text content saved to {local_transcript_file_path}")
+  except FileNotFoundError:
+    print(f"Audio file not found: {gcs_uri_or_local_file_path}")
+    raise
 
   return local_transcript_file_path
+
+
+def get_transcript_from_video(
+    video: video_class.Video,
+    audio_bucket_name: str,
+) -> str | None:
+  """Gets a transcript from a video.
+
+  Args:
+    video: The Video object to transcribe.
+    audio_bucket_name: Name of the audio bucket in Google Cloud Storage.
+
+  Returns:
+    The text of the transcript, or None if the transcription fails.
+  """
+  video_uri = video.uri
+  video_id = video.video_id
+  languages = video.languages or detect_language(video.title)
+
+  temp_video_file = None
+  if os.path.exists(video_uri):
+    local_video_file_path = video_uri
+  else:
+    temp_video_file = tempfile.NamedTemporaryFile()
+    local_video_file_path = download_video(video_uri, temp_video_file.name)
+
+  temp_audio_dir = tempfile.TemporaryDirectory()
+  local_audio_file_path = extract_audio_from_video(
+      local_video_file_path, temp_audio_dir.name
+  )
+  audio_file_cloud_uri = upload_local_file_to_google_cloud(
+      audio_bucket_name, local_audio_file_path, f"{video_id}.wav"
+  )
+  temp_transcript_file = tempfile.NamedTemporaryFile()
+  local_transcript_filename = transcribe_audio(
+      audio_file_cloud_uri, languages, output_filename=temp_transcript_file.name
+  )
+  with open(local_transcript_filename, "r", encoding="UTF-8") as file:
+    transcript = file.read()
+
+  if temp_video_file:
+    temp_video_file.close()
+  temp_audio_dir.cleanup()
+  temp_transcript_file.close()
+
+  return transcript

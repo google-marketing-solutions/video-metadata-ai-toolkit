@@ -79,7 +79,7 @@ class TestMRSSParser(unittest.TestCase):
     self.assertIsNotNone(videos)
     self.assertIsInstance(videos, list)
     self.assertEqual(len(videos), 1)
-    self.assertEqual(videos[0].id, "video123")
+    self.assertEqual(videos[0].video_id, "video123")
     self.assertEqual(videos[0].uri, "http://example.com/video.mp4")
     self.assertEqual(videos[0].title, "You Can't See Me But I'm Waving Video")
     self.assertEqual(
@@ -110,7 +110,7 @@ class TestMRSSParser(unittest.TestCase):
     videos = mrss_parser.parse_mrss("http://example.com/mrss.xml")
 
     video = videos[0]
-    self.assertEqual(video.id, "video123")
+    self.assertEqual(video.video_id, "video123")
     self.assertEqual(video.uri, "http://example.com/video.mp4")
     self.assertEqual(video.title, "You Can't See Me But I'm Waving Video")
     self.assertEqual(

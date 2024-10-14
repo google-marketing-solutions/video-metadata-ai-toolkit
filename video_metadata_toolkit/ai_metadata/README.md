@@ -59,25 +59,46 @@ These are the APIs you need to enable for the AI-generated metadata tags.
 
 ##### **Run AI Metadata Code**
 
+###### From the command line:
+```
+usage: ai_metadata_generator.py [-h] [--video_id VIDEO_ID] [--title TITLE]
+  [--metadata METADATA] video_uri
+
+positional arguments:
+  video_uri            The URI of the video to be processed.
+
+options:
+  -h, --help           show this help message and exit
+  --video_id VIDEO_ID  The unique identifier of the video. If not provided,
+                        it will be extracted from the video URI.
+  --title TITLE        User provided title for the video. Defaults to an
+                        empty string
+  --metadata METADATA  User provided metadata associated with the video.
+                        Defaults to anempty string.
+```
+
+For example:
+```
+python ai_metadata_generator.py my/video/uri.mp4
+```
+
+
+
+###### From a python project:
+
 [ai_metadata_generator.py](https://github.com/google-marketing-solutions/video-metadata-ai-toolkit/video-metadata-ai-toolkit/ai_metadata_generator.py) has the function which is the main entry point for
 running the code:
 
-```
+```py
+from video_metadata_toolkit.ai_metadata import ai_metadata_generator, video_class
 
-main(
-
-video_id,
-
-video_url,
-
-metadata="",
-
-video_title="",
-
-audio_bucket_name=project_configs.AUDIO_BUCKET_NAME,
-
-transcript_bucket_name=project_configs.TRANSCRIPT_BUCKET_NAME,
-
+video = video_class.Video(
+    "my_video_id",
+    uri="https://example_video.mp4" # Also supports local files.
+)
+video_with_ai_attributes = ai_metadata_generator.add_ai_attributes_to_video(
+    video,
+    project_configs.AUDIO_BUCKET_NAME,
 )
 
 ```
