@@ -14,10 +14,10 @@
 """Test the ai metadata genertator file."""
 
 import unittest
-from unittest.mock import patch, mock_open, MagicMock
-from video_class import Video
-import transcription_utils
+from unittest.mock import MagicMock, mock_open, patch
 import ai_metadata_generator
+import transcription_utils
+from video_class import Video
 
 
 class TestVideoMetadataGenerator(unittest.TestCase):

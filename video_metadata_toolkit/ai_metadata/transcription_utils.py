@@ -16,11 +16,11 @@
 
 import os
 import subprocess
-import project_configs
 import google.api_core.exceptions as google_exceptions
 import google.cloud.speech as speech
 import google.cloud.storage as storage
 import google.cloud.translate_v3 as translate
+import project_configs
 import requests
 
 
@@ -182,8 +182,8 @@ def _extract_audio_from_local_file(
 
   Args:
     local_file_path (str): The path to the local video file.
-    output_audio_file_directory (str): The directory to save the extracted
-      audio file.
+    output_audio_file_directory (str): The directory to save the extracted audio
+      file.
 
   Returns:
     str: Full path of the extracted audio file.
@@ -224,8 +224,8 @@ def _extract_audio_from_gcs(
   Args:
     gcs_uri (str): The GCS URI of the video file (e.g.,
       'gs://my-bucket/video.mp4').
-    output_audio_file_directory (str): The directory to save the extracted
-      audio file.
+    output_audio_file_directory (str): The directory to save the extracted audio
+      file.
 
   Returns:
     str: Full path of the extracted audio file.
@@ -258,8 +258,8 @@ def extract_audio_from_video(
   """Extracts audio from a GCS URI or a local file path using ffmpeg.
 
   Args:
-    gcs_uri_or_local_file_path (str): GCS URI (e.g.,
-      'gs://my-bucket/video.mp4') or local file path.
+    gcs_uri_or_local_file_path (str): GCS URI (e.g., 'gs://my-bucket/video.mp4')
+      or local file path.
     output_audio_file_directory (str): The name of the directory in which to
       save the audio file.
 
@@ -425,8 +425,8 @@ def transcribe_audio(
   """Transcribes audio from a GCS URI or a local file path.
 
   Args:
-    gcs_uri_or_local_file_path (str): GCS URI (e.g.,
-      'gs://my-bucket/audio.wav') or local file path.
+    gcs_uri_or_local_file_path (str): GCS URI (e.g., 'gs://my-bucket/audio.wav')
+      or local file path.
     languages (list): The languages to use for transcription. Defaults to
       British English.
     output_filename (str, optional): The name of the file to save the

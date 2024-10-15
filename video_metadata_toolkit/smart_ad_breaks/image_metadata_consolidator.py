@@ -15,6 +15,7 @@
 # limitations under the License.
 
 """This module is responsible for consolidating labels from different iterations
+
 of streaming labels output .tsv files.
 
 This code is meant to be executed standalone and accepts three parameters, the
@@ -25,7 +26,7 @@ The output will be a .tsv file with the consolidated labels and their frequency.
 Typical usage example:
 
    python3 ./image_metadata_consolidator.py labels
-            2024-03-05-15-13-22 2024-03-05-15-20-23 "./" 
+            2024-03-05-15-13-22 2024-03-05-15-20-23 "./"
 """
 
 import argparse
@@ -81,6 +82,7 @@ def _file_names_within_range(
     begin_time: datetime.datetime, end_time: datetime.datetime, path: str
 ) -> [str]:
   """Filters stream files containing labels for processing
+
   according to their timestamp.Only files which were generated within
   the start and end inputs will be considered.
   Returns the list of files as a list of strings.
@@ -114,6 +116,7 @@ def _file_names_within_range(
 
 def _consolidate_entries_to_dict(list_of_files: list[str]) -> dict[str, int]:
   """Consolidates the labels and frequencies from an input file to
+
   the new (if first iteration) or existing dictionary which will be outputed.
 
   Args:
@@ -145,8 +148,8 @@ def _dict_output_to_file(input_list: list[str]) -> str:
   """Persist list containing timestamp and metadata dictionary to local file.
 
   Args:
-      input_list: A list containing the timestamp and the output
-      metadata dictionary.
+      input_list: A list containing the timestamp and the output metadata
+        dictionary.
 
   Returns:
       A string of the file named saved.

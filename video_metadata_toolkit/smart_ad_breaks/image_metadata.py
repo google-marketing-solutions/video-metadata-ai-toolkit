@@ -51,8 +51,8 @@ def generate_metadata(path: str, confidence: float) -> [str, dict[str, int]]:
 
   Args:
       path: A string. Path of the .mp4 file to be processed.
-      conf_threshold: A float between 0 and 1. Represents confidence
-      threshold to consider when detecting labels.
+      conf_threshold: A float between 0 and 1. Represents confidence threshold
+        to consider when detecting labels.
 
   Returns:
       An array where the first element is a string timestamp of execution and

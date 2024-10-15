@@ -60,11 +60,10 @@ def generate_metadata(url: str, confidence: int) -> list[str, dict[str, int]]:
   Saves screenshot files locally, fetches metadata for each image and outputs
    dictionary with labels, frequency of each and the timestamp.
 
-  Args:
-      in_args.command: A string. Currently only "labels" supported
-      in_args.url: A string. URL of stream .m3u8 file to be processed.
-      in_args.conf_threshold: A float between 0 and 1. Represents confidence
-      threshold to consider when detecting labels.
+  Args: in_args.command: A string. Currently only "labels" supported
+  in_args.url: A string. URL of stream .m3u8 file to be processed.
+  in_args.conf_threshold: A float between 0 and 1. Represents confidence
+  threshold to consider when detecting labels.
 
   Returns:
       An array where the first element is a string timestamp of execution and

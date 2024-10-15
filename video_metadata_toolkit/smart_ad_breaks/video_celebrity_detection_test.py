@@ -14,7 +14,7 @@
 """Tests for the video_celebrity_detection module."""
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 import video_celebrity_detection as vcd
 
 
@@ -35,7 +35,9 @@ class TestVideoCelebrityDetection(unittest.TestCase):
     )
 
     mock_post.assert_called_once_with(
-        url="https://videointelligence.googleapis.com/v1p3beta1/videos:annotate",
+        url=(
+            "https://videointelligence.googleapis.com/v1p3beta1/videos:annotate"
+        ),
         json={
             "inputUri": "gs://input_video.mp4",
             "outputUri": "gs://output_json.json",

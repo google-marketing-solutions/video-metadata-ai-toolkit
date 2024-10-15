@@ -13,12 +13,11 @@
 # limitations under the License.
 """Determines optimal cue points based on shot changes and audio."""
 
-import sys
 import argparse
-
-import video_analysis
+import sys
 
 from google.cloud import videointelligence
+import video_analysis
 
 
 def _calculate_optimal_cue_points(
@@ -66,11 +65,11 @@ def determine_video_cue_points(
     minimum_time_for_first_cue_point: The earliest time, in seconds, that will
       be returned as a cue point. Defaults to 0.0, which corresponds to a
       pre-roll.
-    minimum_time_between_cue_points: The smallest amount of time, in seconds,
-      to allow between any two sequential cue points. Defaults to 30.0 seconds.
+    minimum_time_between_cue_points: The smallest amount of time, in seconds, to
+      allow between any two sequential cue points. Defaults to 30.0 seconds.
     volume_threshold: The maximum volume threshold for a cue point. Can be used
-      to eliminate shot changes that may have dialogue or other important
-      audio. This is currently a no-op for files hosted on GCP.
+      to eliminate shot changes that may have dialogue or other important audio.
+      This is currently a no-op for files hosted on GCP.
 
   Returns:
     A list of floats with the recommended cue points, in seconds.

@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-This script allows you to execute and get the results of celebrity detection
+"""This script allows you to execute and get the results of celebrity detection
+
 using the cloud video intelligence API.
 
 There are two operations and each can be executed as follows:
@@ -24,17 +24,17 @@ execute: To initiate a processing request of a video:
 result: To fetch the processing results after an execute step. The ri argument
 is the output of the execute step:
   python3 ./video_celebrity_detection.py result
-  -ri "projects/123/locations/us-east1/operations/456" 
+  -ri "projects/123/locations/us-east1/operations/456"
 """
 
 import argparse
 import logging
 import re
-import requests
 import sys
 
 import google.auth
 import google.auth.transport.requests
+import requests
 
 
 def execute_celebrity_detection(
@@ -86,7 +86,7 @@ def result_celebrity_detection(result_input: str) -> str:
 
   Args:
     result_input: The result name obtained from the execution operation
-    response.
+      response.
 
   Returns:
     The JSON response from the API.
@@ -125,11 +125,12 @@ def get_access_token() -> str:
 
 def get_project_num(result_input: str) -> str:
   """Gets the project number from an execute operation output string, which
+
   then can be used as an input for the result operation.
 
   Args:
     result_input: The result name obtained from the execution operation
-    response.
+      response.
 
   Returns:
     The project number.
@@ -154,29 +155,29 @@ def _parse_args(args) -> argparse.Namespace:
   subparsers = argparser.add_subparsers(dest="operation")
   execute_parser = subparsers.add_parser(
       "execute",
-      help=("To execute the detection of a video."),
+      help="To execute the detection of a video.",
   )
   result_parser = subparsers.add_parser(
       "result",
-      help=("Gets the celebrity detection result."),
+      help="Gets the celebrity detection result.",
   )
   execute_parser.add_argument(
       "--input-uri",
       "-i",
       type=str,
-      help=("Input URI of video to be processed."),
+      help="Input URI of video to be processed.",
   )
   execute_parser.add_argument(
       "--output-uri",
       "-o",
       type=str,
-      help=("Output URI of where results will be saved."),
+      help="Output URI of where results will be saved.",
   )
   execute_parser.add_argument(
       "--project-number",
       "-p",
       type=str,
-      help=("The numeric identifier for your Google Cloud project."),
+      help="The numeric identifier for your Google Cloud project.",
   )
   result_parser.add_argument(
       "--result-input",

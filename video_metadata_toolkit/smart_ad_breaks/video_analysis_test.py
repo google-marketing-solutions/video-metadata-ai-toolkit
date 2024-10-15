@@ -15,11 +15,10 @@
 
 import math
 import unittest
-import ffmpeg
-from google.cloud import videointelligence
-
 from unittest import mock
 
+import ffmpeg
+from google.cloud import videointelligence
 import video_analysis
 
 
@@ -62,18 +61,16 @@ def _create_gcp_video_segment(
   start_nanos = int((start_offset - start_seconds) * 1e9)
   end_seconds = int(math.floor(end_offset))
   end_nanos = int((end_offset - end_seconds) * 1e9)
-  return videointelligence.VideoSegment(
-      {
-          "start_time_offset": {
-              "seconds": start_seconds,
-              "nanos": start_nanos,
-          },
-          "end_time_offset": {
-              "seconds": end_seconds,
-              "nanos": end_nanos,
-          },
-      }
-  )
+  return videointelligence.VideoSegment({
+      "start_time_offset": {
+          "seconds": start_seconds,
+          "nanos": start_nanos,
+      },
+      "end_time_offset": {
+          "seconds": end_seconds,
+          "nanos": end_nanos,
+      },
+  })
 
 
 @mock.patch.object(
@@ -200,14 +197,17 @@ class FfmpegVideoAnalyzerTest(unittest.TestCase):
   def test_detect_shot_changes(self):
     wrapped_ffmpeg = mock.MagicMock(wraps=ffmpeg)
     wrapped_ffmpeg.probe.return_value = _TEST_FFMPEG_PROBE_RESULTS
-    # pylint: disable=line-too-long
     ffmpeg_output_string = (
-        "[silencedetect @ 0x55d381c9e340] silence_start: 65.2051trate=N/A speed=40.5x\n"
-        "[Parsed_showinfo_1 @ 0x55d381c9e100] n:  21 pts:   1969 pts_time:65.6333 duration:      1 duration_time:0.0333333 fmt:yuv420p cl:left sar:1/1 s:1280x720 i:P iskey:1 type:I checksum:06EF2934 plane_checksum:[46DED666 A0342EB7 9A392408] mean:[73 127 130] stdev:[60.1 9.5 10.1]\n"
-        "[Parsed_showinfo_1 @ 0x55d381c9e100] color_range:unknown color_space:unknown color_primaries:unknown color_trc:unknown"
-        "[silencedetect @ 0x55d381c9e340] silence_end: 65.7935 | silence_duration: 0.588417\n"
+        "[silencedetect @ 0x55d381c9e340] silence_start: 65.2051trate=N/A"
+        " speed=40.5x\n[Parsed_showinfo_1 @ 0x55d381c9e100] n:  21 pts:   1969"
+        " pts_time:65.6333 duration:      1 duration_time:0.0333333 fmt:yuv420p"
+        " cl:left sar:1/1 s:1280x720 i:P iskey:1 type:I checksum:06EF2934"
+        " plane_checksum:[46DED666 A0342EB7 9A392408] mean:[73 127 130]"
+        " stdev:[60.1 9.5 10.1]\n[Parsed_showinfo_1 @ 0x55d381c9e100]"
+        " color_range:unknown color_space:unknown color_primaries:unknown"
+        " color_trc:unknown[silencedetect @ 0x55d381c9e340] silence_end:"
+        " 65.7935 | silence_duration: 0.588417\n"
     )
-    # pylint: enable=line-too-long
     wrapped_ffmpeg.output.return_value.run.return_value = (
         "unused",
         str.encode(ffmpeg_output_string),

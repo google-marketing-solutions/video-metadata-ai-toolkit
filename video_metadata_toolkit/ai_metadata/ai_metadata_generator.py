@@ -65,8 +65,8 @@ def _get_transcription_from_video(
   Args:
     video (Video): The Video object to get the transcription for.
     audio_bucket_name (str): Name of the audio bucket in Google Cloud Storage.
-    transcript_bucket_name (str): Name of the transcript bucket in Google
-      Cloud Storage.
+    transcript_bucket_name (str): Name of the transcript bucket in Google Cloud
+      Storage.
 
   Returns:
     The text of the transcript, or None if the transcription fails.
@@ -131,8 +131,7 @@ def _add_ai_attributes_to_video(
   6. Generates and assigns an AI-suggested external summary for the video.
 
   Args:
-    video (Video): The Video object to be enhanced with AI-generated
-      attributes.
+    video (Video): The Video object to be enhanced with AI-generated attributes.
     audio_bucket_name (str): The name of the audio bucket in Google Cloud
       Storage.
     transcript_bucket_name (str): The name of the transcript bucket in Google
@@ -171,8 +170,7 @@ def main(
     audio_bucket_name=project_configs.AUDIO_BUCKET_NAME,
     transcript_bucket_name=project_configs.TRANSCRIPT_BUCKET_NAME,
 ) -> Video:
-  """
-  Main function to process a video and generate AI attributes.
+  """Main function to process a video and generate AI attributes.
 
   This function processes a video by generating its AI attributes, such as
   transcript, summary, metadata, title suggestions, and external summary. It

@@ -15,10 +15,10 @@
 import os
 import unittest
 from unittest import mock
-import requests
-import transcription_utils
 import google.api_core.exceptions as google_exceptions
 import requests
+import requests
+import transcription_utils
 
 
 class TestDownloadVideo(unittest.TestCase):

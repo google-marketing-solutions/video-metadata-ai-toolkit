@@ -32,12 +32,13 @@ def detect_labels_dict(
     threshold: float,
 ) -> dict[str, int]:
   """Gets labels and saves in dictionary from given screenshot image
+
   using Cloud Vision API.
 
   Args:
       path: A string of the path of the screenshot to be processed.
-      in_dict: An empty or existing dict where the key is the string of
-        labels, and the values are the frequency of appearance of each.
+      in_dict: An empty or existing dict where the key is the string of labels,
+        and the values are the frequency of appearance of each.
       threshold: A float representing the threshold to use for label detection.
 
   Returns:
@@ -84,7 +85,7 @@ def generate_screenshot(
       out_filename: The path where the screenshot should be saved. Add desired
         extesion.
       time: An int of the time in seconds of where to take the printscreen from
-      video.
+        video.
       width: An int representing the desired size of screenshot. Example: 500.
 
   Returns:

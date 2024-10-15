@@ -77,8 +77,8 @@ class CloudVideoAnalyzer(VideoAnalyzer):
 
     Args:
       video: The uri of the video. Should be in the format gs://path/to/video
-      volume_threshold: Currently a no-op. GCP's shot detection does not
-        support a volume threshold.
+      volume_threshold: Currently a no-op. GCP's shot detection does not support
+        a volume threshold.
 
     Returns:
       A list of VideoSegments for the video.

@@ -17,8 +17,8 @@ import unittest
 from unittest import mock
 
 import ffmpeg
-import image_metadata_utils as utils
 from google import cloud
+import image_metadata_utils as utils
 
 
 class ImageMetadataUtilsTest(unittest.TestCase):
