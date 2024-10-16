@@ -41,5 +41,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Test
-        run: python -m unittest discover video_metadata_toolkit  -p "*_test.py"
+      - name: Test (ai_metadata)
+        run: python -m unittest discover ai_metadata  -p "*_test.py"
+      - name: Test (celebrity_detection)
+        run: python -m unittest discover celebrity_detection  -p "*_test.py"
+      - name: Test (image_metadata)
+        run: python -m unittest discover image_metadata  -p "*_test.py"
+      - name: Test (smart_ad_breaks)
+        run: python -m unittest discover smart_ad_breaks  -p "*_test.py"

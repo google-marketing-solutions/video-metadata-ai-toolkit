@@ -14,14 +14,14 @@
 
 #!/bin/bash
 
-set -e
-
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 cd "$parent_path"
 
 pip3 install -q -r requirements.txt
 
 printf "Tests:\n"
-python3 -m unittest discover "video_metadata_toolkit" -p "*_test.py"
+for dir in ai_metadata celebrity_detection image_metadata smart_ad_breaks; do
+  python3 -m unittest discover "$dir" "*_test.py" -q
+done
 printf "\nLint:"
-pylint video_metadata_toolkit
+pylint */*.py

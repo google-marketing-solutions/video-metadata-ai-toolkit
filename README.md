@@ -7,46 +7,17 @@ are not formally supported by Google and are provided only as a reference.
 
 ### **Introduction**
 
-This repo currently houses two different use cases: AI Metadata (generate metadata
-for your videos using AI) and Smart Ad Breaks (generate cue points for your VOD
-and live video content to insert ads at the right moments). Navigate to their respective
-folders to find more info on each of them.
+This repository currently houses four different video metadata related
+solutions:
+- AI Metadata: Use LLMs to generate metadata and descriptions for video content
+based on a transcript of the video's audio track.
+- Smart Ad Breaks: Identify suitable cue points for VOD content based on shot
+changes.
+- Celebrity Detection: Identify celebrities in video content using GCP's
+celebrity detection API (soon to be deprecated.)
+- Image Metadata: Identify things/objects in video content.
 
-## **Code format**
-
-Submitted code should conform to Google's Python style guide. To format code
-automatically, run `pyink --pyink-indentation=2 -l 80 [FILENAME]`.
-
-For VS Code users, you can configure the formatter to run automatically by
-adding the following to your `settings.json`:
-
-```
-
-"[python]": {
-
-"editor.defaultFormatter": "ms-python.black-formatter",
-
-"editor.formatOnSave": true,
-
-"editor.formatOnPaste": true,
-
-"editor.formatOnType": true
-
-},
-
-"black-formatter.args": [
-
-"--pyink-indentation=2"
-
-],
-
-"black-formatter.path": [
-
-"pyink"
-
-],
-
-```
+Navigate to their respective directories for more info about each solution.
 
 #### **Scripts**
 
