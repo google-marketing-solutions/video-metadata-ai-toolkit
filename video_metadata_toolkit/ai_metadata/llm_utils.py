@@ -13,7 +13,6 @@
 # limitations under the License.
 import ast
 from typing import Any
-import pandas as pd
 import project_configs
 import vertexai
 from vertexai.generative_models import GenerativeModel
