@@ -144,7 +144,7 @@ class FfmpegVideoAnalyzerTest(unittest.TestCase):
   def test_detect_shot_changes_uses_scene_filter_and_silece_detect(self):
     wrapped_ffmpeg = mock.MagicMock(wraps=ffmpeg)
     wrapped_ffmpeg.probe.return_value = _TEST_FFMPEG_PROBE_RESULTS
-    wrapped_ffmpeg.output.return_value.run.return_value = (
+    wrapped_ffmpeg.run.return_value = (
         "unused",
         str.encode("ffmpeg output string"),
     )
@@ -166,7 +166,7 @@ class FfmpegVideoAnalyzerTest(unittest.TestCase):
   def test_detect_shot_changes_volume_thresh_1000_if_none(self):
     wrapped_ffmpeg = mock.MagicMock(wraps=ffmpeg)
     wrapped_ffmpeg.probe.return_value = _TEST_FFMPEG_PROBE_RESULTS
-    wrapped_ffmpeg.output.return_value.run.return_value = (
+    wrapped_ffmpeg.run.return_value = (
         "unused",
         str.encode("ffmpeg output string"),
     )
@@ -184,7 +184,7 @@ class FfmpegVideoAnalyzerTest(unittest.TestCase):
   def test_detect_shot_changes_no_shots_returns_one_segment(self):
     wrapped_ffmpeg = mock.MagicMock(wraps=ffmpeg)
     wrapped_ffmpeg.probe.return_value = _TEST_FFMPEG_PROBE_RESULTS
-    wrapped_ffmpeg.output.return_value.run.return_value = (
+    wrapped_ffmpeg.run.return_value = (
         "unused",
         str.encode("ffmpeg output string with no shots detected"),
     )
@@ -208,7 +208,7 @@ class FfmpegVideoAnalyzerTest(unittest.TestCase):
         " color_trc:unknown[silencedetect @ 0x55d381c9e340] silence_end:"
         " 65.7935 | silence_duration: 0.588417\n"
     )
-    wrapped_ffmpeg.output.return_value.run.return_value = (
+    wrapped_ffmpeg.run.return_value = (
         "unused",
         str.encode(ffmpeg_output_string),
     )

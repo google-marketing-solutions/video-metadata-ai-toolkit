@@ -129,7 +129,7 @@ class FfmpegVideoAnalyzer(VideoAnalyzer):
     non-streaming format first.
 
     Args:
-      video: The path for the video. Should be in the format gs://path/to/video
+      video: The path for the video. Both local and remote URIs are supported.
       volume_threshold: If provided, shot changes must be below this volume, in
         dB to be included in the results.
 
@@ -157,12 +157,13 @@ class FfmpegVideoAnalyzer(VideoAnalyzer):
     audio_stream = input_stream.audio.filter(
         "silencedetect", n=f"{volume_threshold}dB", d=0.25
     )
-    _, message = self._ffmpeg.output(
+    stream_spec = self._ffmpeg.output(
         video_stream,
         audio_stream,
         "pipe:",
         format="null",
-    ).run(quiet=True)
+    )
+    _, message = self._ffmpeg.run(stream_spec, quiet=True)
     ffmpeg_ouput = message.decode()
     # filter output to only include entries within the volume threshold (between
     # "silent_start:" and "silent_end:")
