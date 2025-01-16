@@ -7,7 +7,8 @@ are not formally supported by Google and are provided only as a reference.
 
 ### **Introduction**
 
-This is a Python solution which takes a publisher-provided video and generates metadata to tag the video, allowing publishers to better target ads and improve monetization. It does this by downloading the video, stripping out the audio, using Speech-to-Text to get the transcript, and sending that to Gemini to generate the metadata. Publishers can run this solution on their videos as they get uploaded to their CMS, so the metadata can be automatically added.
+This is a Python solution which takes a media content (video, images, articles, etc.) and uses a language model to describe and generate metadata for the content. The project supports generating detailed content descriptions, user-friendly summaries, metadata tags, key values, and title suggestions.
+
 
 ### **AI Metadata Development**
 
@@ -17,144 +18,68 @@ This is a Python solution which takes a publisher-provided video and generates m
 
 2.  From inside the environment run `pip install -r requirements.txt`.
 
-3.  If you plan to run anything locally, setup your Application Default
-    Credentials and project ID for GCP.
-
-
-Application Default Credentials:
+3.  Export your Gemini API Key as an environment variable:
 
 ```
-
-gcloud auth application-default login
-
+export GEMINI_API_KEY=[YOUR API KEY]
 ```
 
-Set project ID:
-
-```
-
-gcloud config set project [PROJECT_ID]
-
-```
-
-Input your GCP project ID into the project_configs.py file.
-
-
-4.  Make sure to run the code from within the ai_tags directory.
-
-
-### **Google Cloud**
-
-You need a Google Cloud Project to each of these use cases.
-
-These are the APIs you need to enable for the AI-generated metadata tags.
-
-*   Cloud Storage
-
-*   Cloud Translation
-
-*   Cloud Speech-to-Text
-
-*   Vertex AI
+4. (Optional) To use ```add_ai_attributes_to_video``` you must also setup your application default credentials for Google Cloud and populate the values in ```project_configs.py```.
 
 ##### **Run AI Metadata Code**
 
 ###### From the command line:
 ```
-usage: ai_metadata_generator.py [-h] [--video_id VIDEO_ID] [--title TITLE]
-  [--metadata METADATA] video_uri
+usage: ai_metadata_generator.py [-h] [--keys KEYS [KEYS ...]] {describe,summarize,tag,title} content_file
+
+Analyzes content using AI.
 
 positional arguments:
-  video_uri            The URI of the video to be processed.
+  {describe,summarize,tag,title}
+                        The action to perform for the provided content.
+  content_file          The URI of the content to be processed (local files only).
 
 options:
-  -h, --help           show this help message and exit
-  --video_id VIDEO_ID  The unique identifier of the video. If not provided,
-                        it will be extracted from the video URI.
-  --title TITLE        User provided title for the video. Defaults to an
-                        empty string
-  --metadata METADATA  User provided metadata associated with the video.
-                        Defaults to anempty string.
+  -h, --help            show this help message and exit
+  --keys KEYS [KEYS ...]
+                        Use with "tag" to create key/values instead of free-form metadata values. No-op otherwise.
 ```
 
-For example:
+describe: Generates a content description with as much detail as possible.
 ```
-python ai_metadata_generator.py my/video/uri.mp4
+python ai_metadata_generator.py describe my/video/uri.mp4
 ```
 
+summarize: Generates a user-friendly summary of the content
+```
+python ai_metadata_generator.py summarize my/video/uri.mp4
+```
+
+tag: Generates metadata tags for the content (use with --keys to create key values)
+```
+python ai_metadata_generator.py tag my/video/uri.mp4
+```
+```
+python ai_metadata_generator.py tag my/video/uri.mp4 --keys key1 key2 key3
+```
+
+title: Suggests possible titles for the content
+```
+python ai_metadata_generator.py title my/video/uri.mp4
+```
 
 
 ###### From a python project:
 
-[ai_metadata_generator.py](https://github.com/google-marketing-solutions/video-metadata-ai-toolkit/video-metadata-ai-toolkit/ai_metadata_generator.py) has the function which is the main entry point for
-running the code:
+And of these functions can be called from a python project by importing the [ai_metadata_generator.py](https://github.com/google-marketing-solutions/video-metadata-ai-toolkit/video-metadata-ai-toolkit/ai_metadata_generator.py) and [file_io.py](https://github.com/google-marketing-solutions/video-metadata-ai-toolkit/video-metadata-ai-toolkit/file_io.py) modules into your code:
 
 ```py
-from video_metadata_toolkit.ai_metadata import ai_metadata_generator, video_class
+from video_metadata_toolkit.ai_metadata import ai_metadata_generator, file_io
 
-video = video_class.Video(
-    "my_video_id",
-    uri="https://example_video.mp4" # Also supports local files.
-)
-video_with_ai_attributes = ai_metadata_generator.add_ai_attributes_to_video(
-    video,
-    project_configs.AUDIO_BUCKET_NAME,
-)
 
-```
+content_file = file_io.File("my/video/uri.mp4")
+content_description = ai_metadata_generator.describe(content_file)
 
-#### **Run tests**
-
-From the top level project directory:
-
-```
-
-python -m unittest discover video_metadata_toolkit -p "*_test.py"
-
-```
-
-## **Code format**
-
-Submitted code should conform to Google's Python style guide. To format code
-automatically, run `pyink --pyink-indentation=2 -l 80 [FILENAME]`.
-
-For VS Code users, you can configure the formatter to run automatically by
-adding the following to your `settings.json`:
-
-```
-
-"[python]": {
-
-"editor.defaultFormatter": "ms-python.black-formatter",
-
-"editor.formatOnSave": true,
-
-"editor.formatOnPaste": true,
-
-"editor.formatOnType": true
-
-},
-
-"black-formatter.args": [
-
-"--pyink-indentation=2"
-
-],
-
-"black-formatter.path": [
-
-"pyink"
-
-],
-
-```
-
-#### **Scripts**
-
-To manually run tests and the linter:
-
-```
-
-sh test_and_lint.sh
-
+# to remove the file from Gemini's storage
+content_file.cleanup()
 ```
