@@ -86,6 +86,8 @@ def create_gemini_llm(
     api_key: str | None = None,
 ) -> MultiModalLLM:
   google_genai.configure(api_key=api_key or os.environ["GEMINI_API_KEY"])
-  gemini = google_genai.GenerativeModel(system_instruction=system_prompt)
+  gemini = google_genai.GenerativeModel(
+      model_name="gemini-2.0-flash", system_instruction=system_prompt
+  )
   adapter = GeminiLLMAdapter(gemini, file_handler)
   return MultiModalLLM(adapter)
