@@ -36,6 +36,7 @@ options:
 
 import argparse
 import copy
+import dataclasses
 import json
 import sys
 import textwrap
@@ -243,9 +244,15 @@ def summarize(
   )
 
 
+@dataclasses.dataclass
+class KeyValue:
+  key: str
+  allowed_values: list[str]
+
+
 def generate_key_values(
     content: Content | list[Content],
-    keys: list[str],
+    keys: list[str | KeyValue],
     additional_instructions: str = "",
     language_model: models.MultiModalLLM | None = None,
 ) -> dict[str, list[str]]:
@@ -254,7 +261,7 @@ def generate_key_values(
   Args:
       content: The content to analyze. For list inputs, the entire list is
         treated as one piece of content.
-      keys: A list of keys for which to generate values.
+      keys: A list of keys or KeyValue objects for which to generate values.
       additional_instructions: Additional instructions for generation.
       language_model: The language model to use. Defaults to a Gemini LLM.
 
@@ -287,14 +294,27 @@ def generate_key_values(
       * SEO Optimization: Where appropriate, consider relevant keywords and
       search trends to improve content discoverability.
   """)
-  metadata_keys = keys or ["keyword"]
+  metadata_keys = [
+      key if isinstance(key, KeyValue) else KeyValue(key, []) for key in keys
+  ]
   response_schema = {
       "type": "object",
       "properties": {
-          key: {"type": "array", "items": {"type": "string"}}
-          for key in metadata_keys
+          key_value.key: {
+              "type": "array",
+              "items": {
+                  "type": "string",
+                  # only adds "enum" if "allowed_values" is not empty
+                  **(
+                      {"enum": key_value.allowed_values}
+                      if key_value.allowed_values
+                      else {}
+                  ),
+              },
+          }
+          for key_value in metadata_keys
       },
-      "required": metadata_keys,
+      "required": [key_value.key for key_value in metadata_keys],
   }
   response_text = _generate_from_content(
       content,
@@ -302,13 +322,14 @@ def generate_key_values(
       additional_instructions,
       language_model,
       response_schema,
-      0.6,
+      0.3,
   )
   return json.loads(response_text)
 
 
 def generate_metadata(
     content: Content | list[Content],
+    allowed_values: list[str] | None = None,
     additional_instructions: str = "",
     language_model: models.MultiModalLLM | None = None,
 ) -> list[str]:
@@ -317,14 +338,17 @@ def generate_metadata(
   Args:
       content: The content for which to generate metadata. For list inputs, the
         entire list is treated as one piece of content.
+      allowed_values: An optional set of allowed values for the output metadata.
+        If no values are provided, the metadata will be generated free-form.
       additional_instructions:  Additional instructions for metadata generation.
       language_model: The language model to use. Defaults to a Gemini LLM.
 
   Returns:
       A list of metadata strings.
   """
+  metadata_key = KeyValue("keyword", allowed_values or [])
   key_values = generate_key_values(
-      content, ["keyword"], additional_instructions, language_model
+      content, [metadata_key], additional_instructions, language_model
   )
   return key_values["keyword"]
 

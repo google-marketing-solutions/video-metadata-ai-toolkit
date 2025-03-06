@@ -370,7 +370,7 @@ class TestAIMetadataGenerator(unittest.TestCase):
             },
             "required": ["keyword"],
         },
-        0.6,
+        0.3,
     )
 
   @mock.patch.object(models, "create_gemini_llm", autospec=True)
@@ -422,7 +422,38 @@ class TestAIMetadataGenerator(unittest.TestCase):
             },
             "required": ["keyword"],
         },
-        0.6,
+        0.3,
+    )
+
+  @mock.patch.object(models, "create_gemini_llm", autospec=True)
+  def test_generate_key_values_from_list(self, mock_create_gemini_llm):
+    mock_llm = mock_create_gemini_llm.return_value
+    mock_llm.generate.return_value = '{"keyword": ["tag1", "tag2"]}'
+
+    predefined_key = ai_metadata_generator.KeyValue(
+        "keyword2", ["tag1", "tag2"]
+    )
+    ai_metadata_generator.generate_key_values(
+        "text content",
+        ["keyword", predefined_key],
+        "user instructions",
+        language_model=mock_llm,
+    )
+
+    mock_llm.generate.assert_called_once_with(
+        mock.ANY,
+        {
+            "type": "object",
+            "properties": {
+                "keyword": {"type": "array", "items": {"type": "string"}},
+                "keyword2": {
+                    "type": "array",
+                    "items": {"type": "string", "enum": ["tag1", "tag2"]},
+                },
+            },
+            "required": ["keyword", "keyword2"],
+        },
+        0.3,
     )
 
   @mock.patch.object(
@@ -434,12 +465,15 @@ class TestAIMetadataGenerator(unittest.TestCase):
     mock_generate_key_values.return_value = {"keyword": ["tag1", "tag2"]}
 
     metadata = ai_metadata_generator.generate_metadata(
-        "any content", "additional instructions", None
+        "any content", None, "additional instructions", None
     )
 
     self.assertEqual(metadata, ["tag1", "tag2"])
     mock_generate_key_values.assert_called_once_with(
-        "any content", ["keyword"], "additional instructions", None
+        "any content",
+        [ai_metadata_generator.KeyValue("keyword", [])],
+        "additional instructions",
+        None,
     )
 
   @mock.patch.object(models, "create_gemini_llm", autospec=True)
