@@ -17,6 +17,7 @@ import unittest
 from unittest import mock
 
 import ai_metadata_generator
+import iab
 import models
 import transcription_utils
 import video_class
@@ -340,27 +341,38 @@ class TestAIMetadataGenerator(unittest.TestCase):
         [
             "text content",
             (
-                "You are a highly skilled Content Editor working for a major"
-                " media company.\nYour role involves a deep understanding of"
-                " content analysis, metadata\nstandards, and SEO principles."
-                " Your current task is focused on enhancing"
-                " the\ndiscoverability of our content library (videos, images,"
-                " and articles)\nthrough effective metadata tagging.\n\nKey"
-                " Responsibilities:\n- Content Analysis: Carefully review the"
-                " provided content (video content,\nimages, or full articles)"
-                " and identify its core topics, themes, and key\nelements.\n-"
-                " Metadata Tag Generation: Generate a comprehensive set of"
-                " metadata tags\nthat accurately describe the content.\n-"
-                " Prioritize Accuracy: Ensure tags are factual and directly"
-                " related to the\ncontent.\n- Include a range of tags"
-                " covering:\n  * Descriptive: What is literally depicted or"
-                " discussed?\n  * Conceptual: What are the underlying themes"
-                " and ideas?\n  * Categorical:  What broader categories does"
-                " the content belong to?\n  * Named Entities: Are there"
-                " specific people, places, organizations, or\n  events"
-                " featured?\n  * SEO Optimization: Where appropriate, consider"
-                " relevant keywords and\n  search trends to improve content"
-                " discoverability.\n"
+                "You are a highly skilled Ad Targeting Specialist responsible"
+                " for maximizing theadvertising revenue potential of multimedia"
+                " content. Your task is to accurately assign values to a set of"
+                " keys, selecting from provided lists when\navailable, and"
+                " generating relevant values when lists are not provided. Your"
+                " primary goal is to choose values that are highly relevant to"
+                " potential advertisers.\n\n**Keys and Allowed Values (if"
+                " applicable):**\n\nKey: keyword\n "
+                " Any\n\n**Instructions:**\n\n1. **Carefully review the input"
+                " content.** Understand its core topics, themes, and key"
+                " elements *in the context of potential advertising*.\n2. **For"
+                " *each* key, follow these rules:**\n  - **If Allowed Values"
+                " are provided:** Select the most relevant values *from an"
+                " advertising perspective* from the corresponding list."
+                " Prioritize values that are likely to be used as keywords by"
+                " advertisers targeting this type of content. Do *not* generate"
+                " any values outside of the provided list.\n  - **If Allowed"
+                " Values are *not* provided (the key is listed, but the only"
+                ' value is "Any"):** Generate values that are highly relevant'
+                " to advertisers. Consider:\n    - **Common Advertising"
+                ' Categories:** Think about categories like "Travel,"'
+                ' "Technology," "Food & Beverage," "Finance," "Automotive,"'
+                ' "Fashion," etc., and how the video content might relate.\n   '
+                " - **Target Audience Interests:**  Align your generated values"
+                " with the interests and demographics of the most likely target"
+                " audience.\n    - **Keywords:** Use terms that advertisers"
+                " would likely use to target this content.\n3. **Strict"
+                " Adherence (for keys with Allowed Values):** When allowed"
+                " values *are* provided, it is *critical* that you *only* use"
+                " the exact values from the list. Do not modify, rephrase, or"
+                " add any words. Copy the allowed values *exactly* as they"
+                " appear.  Prioritize advertising relevance when selecting.\n"
             ),
         ],
         {
@@ -370,7 +382,7 @@ class TestAIMetadataGenerator(unittest.TestCase):
             },
             "required": ["keyword"],
         },
-        0.3,
+        0.0,
     )
 
   @mock.patch.object(models, "create_gemini_llm", autospec=True)
@@ -381,37 +393,41 @@ class TestAIMetadataGenerator(unittest.TestCase):
     mock_llm.generate.return_value = '{"keyword": ["tag1", "tag2"]}'
 
     ai_metadata_generator.generate_key_values(
-        "text content",
-        ["keyword"],
-        "user instructions",
-        language_model=mock_llm,
-    )
-
-    mock_llm.generate.assert_called_once_with(
         [
             "text content",
             (
-                "You are a highly skilled Content Editor working for a major"
-                " media company.\nYour role involves a deep understanding of"
-                " content analysis, metadata\nstandards, and SEO principles."
-                " Your current task is focused on enhancing"
-                " the\ndiscoverability of our content library (videos, images,"
-                " and articles)\nthrough effective metadata tagging.\n\nKey"
-                " Responsibilities:\n- Content Analysis: Carefully review the"
-                " provided content (video content,\nimages, or full articles)"
-                " and identify its core topics, themes, and key\nelements.\n-"
-                " Metadata Tag Generation: Generate a comprehensive set of"
-                " metadata tags\nthat accurately describe the content.\n-"
-                " Prioritize Accuracy: Ensure tags are factual and directly"
-                " related to the\ncontent.\n- Include a range of tags"
-                " covering:\n  * Descriptive: What is literally depicted or"
-                " discussed?\n  * Conceptual: What are the underlying themes"
-                " and ideas?\n  * Categorical:  What broader categories does"
-                " the content belong to?\n  * Named Entities: Are there"
-                " specific people, places, organizations, or\n  events"
-                " featured?\n  * SEO Optimization: Where appropriate, consider"
-                " relevant keywords and\n  search trends to improve content"
-                " discoverability.\n"
+                "You are a highly skilled Ad Targeting Specialist responsible"
+                " for maximizing theadvertising revenue potential of multimedia"
+                " content. Your task is to accurately assign values to a set of"
+                " keys, selecting from provided lists when\navailable, and"
+                " generating relevant values when lists are not provided. Your"
+                " primary goal is to choose values that are highly relevant to"
+                " potential advertisers.\n\n**Keys and Allowed Values (if"
+                " applicable):**\n\nKey: keyword\n "
+                " Any\n\n**Instructions:**\n\n1. **Carefully review the input"
+                " content.** Understand its core topics, themes, and key"
+                " elements *in the context of potential advertising*.\n2. **For"
+                " *each* key, follow these rules:**\n  - **If Allowed Values"
+                " are provided:** Select the most relevant values *from an"
+                " advertising perspective* from the corresponding list."
+                " Prioritize values that are likely to be used as keywords by"
+                " advertisers targeting this type of content. Do *not* generate"
+                " any values outside of the provided list.\n  - **If Allowed"
+                " Values are *not* provided (the key is listed, but the only"
+                ' value is "Any"):** Generate values that are highly relevant'
+                " to advertisers. Consider:\n    - **Common Advertising"
+                ' Categories:** Think about categories like "Travel,"'
+                ' "Technology," "Food & Beverage," "Finance," "Automotive,"'
+                ' "Fashion," etc., and how the video content might relate.\n   '
+                " - **Target Audience Interests:**  Align your generated values"
+                " with the interests and demographics of the most likely target"
+                " audience.\n    - **Keywords:** Use terms that advertisers"
+                " would likely use to target this content.\n3. **Strict"
+                " Adherence (for keys with Allowed Values):** When allowed"
+                " values *are* provided, it is *critical* that you *only* use"
+                " the exact values from the list. Do not modify, rephrase, or"
+                " add any words. Copy the allowed values *exactly* as they"
+                " appear.  Prioritize advertising relevance when selecting.\n"
             ),
             "**Additional Instructions:** user instructions",
         ],
@@ -422,13 +438,15 @@ class TestAIMetadataGenerator(unittest.TestCase):
             },
             "required": ["keyword"],
         },
-        0.3,
+        0.0,
     )
 
   @mock.patch.object(models, "create_gemini_llm", autospec=True)
   def test_generate_key_values_from_list(self, mock_create_gemini_llm):
     mock_llm = mock_create_gemini_llm.return_value
-    mock_llm.generate.return_value = '{"keyword": ["tag1", "tag2"]}'
+    mock_llm.generate.return_value = (
+        '{"keyword": ["tag1", "tag2"], "keyword2": ["tag1", "tag3", "tag4"]}'
+    )
 
     predefined_key = ai_metadata_generator.KeyValue(
         "keyword2", ["tag1", "tag2"]
@@ -440,21 +458,32 @@ class TestAIMetadataGenerator(unittest.TestCase):
         language_model=mock_llm,
     )
 
-    mock_llm.generate.assert_called_once_with(
-        mock.ANY,
+    expected_allowed_values_str = (
+        "**Keys and Allowed Values (if applicable):**\n\nKey: keyword\n "
+        " Any\n\nKey: keyword2\n  tag1\n  tag2\n\n"
+    )
+
+    prompt, schema, temperature = mock_llm.generate.call_args.args
+    self.assertTrue(
+        any([
+            expected_allowed_values_str in prompt_part for prompt_part in prompt
+        ])
+    )
+    self.assertEqual(
+        schema,
         {
             "type": "object",
             "properties": {
                 "keyword": {"type": "array", "items": {"type": "string"}},
                 "keyword2": {
                     "type": "array",
-                    "items": {"type": "string", "enum": ["tag1", "tag2"]},
+                    "items": {"type": "string"},
                 },
             },
             "required": ["keyword", "keyword2"],
         },
-        0.3,
     )
+    self.assertEqual(temperature, 0.0)
 
   @mock.patch.object(
       ai_metadata_generator, "generate_key_values", autospec=True
@@ -474,6 +503,66 @@ class TestAIMetadataGenerator(unittest.TestCase):
         [ai_metadata_generator.KeyValue("keyword", [])],
         "additional instructions",
         None,
+    )
+
+  @mock.patch.object(iab, "create_content_taxonomy", autospec=True)
+  @mock.patch.object(iab, "create_audience_taxonomy", autospec=True)
+  @mock.patch.object(
+      ai_metadata_generator, "generate_key_values", autospec=True
+  )
+  def test_generate_iab_categories_calls_generate_key_values(
+      self,
+      mock_generate_key_values,
+      mock_create_audience_taxonomy,
+      mock_create_content_taxonomy,
+  ):
+    ai_metadata_generator.generate_iab_categories(
+        "content", additional_instructions="additional"
+    )
+
+    mock_generate_key_values.assert_called_once_with(
+        "content",
+        [
+            ai_metadata_generator.KeyValue(
+                "keyword",
+                allowed_values=mock_create_content_taxonomy.return_value,
+            ),
+            ai_metadata_generator.KeyValue(
+                "expected_audience",
+                allowed_values=mock_create_audience_taxonomy.return_value,
+            ),
+        ],
+        "additional",
+        None,
+    )
+
+  @mock.patch.object(iab, "create_content_taxonomy", autospec=True)
+  @mock.patch.object(iab, "create_audience_taxonomy", autospec=True)
+  @mock.patch.object(
+      ai_metadata_generator, "generate_key_values", autospec=True
+  )
+  def test_generate_iab_categories_parses_generate_key_values_responses(
+      self,
+      mock_generate_key_values,
+      *_,
+  ):
+    mock_generate_key_values.return_value = {
+        "keyword": [
+            iab.TaxonomyEntity("content", "0", "tag1"),
+            iab.TaxonomyEntity("content", "2", "tag3"),
+        ],
+        "expected_audience": [iab.TaxonomyEntity("audience", "1", "audience2")],
+    }
+
+    entities = ai_metadata_generator.generate_iab_categories("content")
+
+    self.assertEqual(
+        entities,
+        [
+            iab.TaxonomyEntity("content", "0", "tag1"),
+            iab.TaxonomyEntity("content", "2", "tag3"),
+            iab.TaxonomyEntity("audience", "1", "audience2"),
+        ],
     )
 
   @mock.patch.object(models, "create_gemini_llm", autospec=True)

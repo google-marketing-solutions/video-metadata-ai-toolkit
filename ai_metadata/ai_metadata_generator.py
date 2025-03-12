@@ -17,13 +17,23 @@ When run from the CLI, this module can be used to processes a video with
 artificial intelligence to generate metadata related to the content.
 
 usage: ai_metadata_generator.py [-h] [--keys KEYS [KEYS ...]]
-{describe,summarize,tag,title} content_file
+{describe,summarize,tag,title,iab} content_file
 
 Analyzes content using AI.
 
 positional arguments:
-  {describe,summarize,tag,title}
-                        The action to perform for the provided content.
+  {describe,summarize,tag,title,iab}
+                        The action to perform for the provided content. Valid
+                        actions are:
+                          title: suggests possible titles for the content
+                          describe: describes the content with as much detail as
+                                    possible
+                          summarize: summarizes the content for an external
+                                     audience
+                          tag: identifies keywords related to the content (use
+                               with --keys to specify custom keys)
+                          iab: identifies IAB content and audience categories
+                               related to the content
   content_file          The URI of the content to be processed (local files
                         only).
 
@@ -42,6 +52,7 @@ import sys
 import textwrap
 from typing import Sequence
 import file_io
+import iab
 import models
 import project_configs
 import transcription_utils
@@ -247,7 +258,44 @@ def summarize(
 @dataclasses.dataclass
 class KeyValue:
   key: str
-  allowed_values: list[str]
+  allowed_values: list[str] | iab.Taxonomy
+
+
+_PROMPT_KEY_VALUES = """\
+You are a highly skilled Ad Targeting Specialist responsible for maximizing the\
+advertising revenue potential of multimedia content. Your task is to \
+accurately assign values to a set of keys, selecting from provided lists when
+available, and generating relevant values when lists are not provided. Your \
+primary goal is to choose values that are highly relevant to potential \
+advertisers.
+
+**Keys and Allowed Values (if applicable):**
+{allowed_values}
+
+**Instructions:**
+
+1. **Carefully review the input content.** Understand its core topics, themes, \
+and key elements *in the context of potential advertising*.
+2. **For *each* key, follow these rules:**
+  - **If Allowed Values are provided:** Select the most relevant values *from \
+an advertising perspective* from the corresponding list. Prioritize values \
+that are likely to be used as keywords by advertisers targeting this type of \
+content. Do *not* generate any values outside of the provided list.
+  - **If Allowed Values are *not* provided (the key is listed, but the only \
+value is "Any"):** Generate values that are highly relevant to advertisers. \
+Consider:
+    - **Common Advertising Categories:** Think about categories like "Travel," \
+"Technology," "Food & Beverage," "Finance," "Automotive," "Fashion," etc., and \
+how the video content might relate.
+    - **Target Audience Interests:**  Align your generated values with the \
+interests and demographics of the most likely target audience.
+    - **Keywords:** Use terms that advertisers would likely use to target this \
+content.
+3. **Strict Adherence (for keys with Allowed Values):** When allowed values \
+*are* provided, it is *critical* that you *only* use the exact values from \
+the list. Do not modify, rephrase, or add any words. Copy the allowed values \
+*exactly* as they appear.  Prioritize advertising relevance when selecting.
+"""
 
 
 def generate_key_values(
@@ -255,7 +303,7 @@ def generate_key_values(
     keys: list[str | KeyValue],
     additional_instructions: str = "",
     language_model: models.MultiModalLLM | None = None,
-) -> dict[str, list[str]]:
+) -> dict[str, list[str] | list[iab.TaxonomyEntity]]:
   """Generates key-value pairs based on the provided content.
 
   Args:
@@ -266,37 +314,41 @@ def generate_key_values(
       language_model: The language model to use. Defaults to a Gemini LLM.
 
   Returns:
-      A dictionary where keys are the provided keys and values are lists of
-      generated strings.
+      A dictionary where the keys are the provided keys and values are lists of
+      generated strings, or, TaxonomyEntities if the keys were restricted to a
+      specific Taxonomy.
   """
   language_model = language_model or models.create_gemini_llm()
-  prompt = textwrap.dedent("""\
-    You are a highly skilled Content Editor working for a major media company.
-    Your role involves a deep understanding of content analysis, metadata
-    standards, and SEO principles. Your current task is focused on enhancing the
-    discoverability of our content library (videos, images, and articles)
-    through effective metadata tagging.
 
-    Key Responsibilities:
-    - Content Analysis: Carefully review the provided content (video content,
-    images, or full articles) and identify its core topics, themes, and key
-    elements.
-    - Metadata Tag Generation: Generate a comprehensive set of metadata tags
-    that accurately describe the content.
-    - Prioritize Accuracy: Ensure tags are factual and directly related to the
-    content.
-    - Include a range of tags covering:
-      * Descriptive: What is literally depicted or discussed?
-      * Conceptual: What are the underlying themes and ideas?
-      * Categorical:  What broader categories does the content belong to?
-      * Named Entities: Are there specific people, places, organizations, or
-      events featured?
-      * SEO Optimization: Where appropriate, consider relevant keywords and
-      search trends to improve content discoverability.
-  """)
   metadata_keys = [
       key if isinstance(key, KeyValue) else KeyValue(key, []) for key in keys
   ]
+  # Creates a string representation of each key and its allowed values (or "Any"
+  # for an unbounded key) to be added to the prompt:
+  #
+  # Key: <key_name>
+  #   <allowed value 1>
+  #   <allowed value 2>
+  #   ...
+  #
+  # Key: <key_name>
+  #   Any
+  lines = []
+  for key_value in metadata_keys:
+    lines.append("")
+    lines.append(f"Key: {key_value.key}")
+    if isinstance(key_value.allowed_values, iab.Taxonomy):
+      value_list = key_value.allowed_values.tolist()
+    else:
+      value_list = key_value.allowed_values
+
+    if value_list:
+      lines.extend([f"  {val}" for val in value_list])
+    else:
+      lines.append("  Any")
+
+  allowed_values = "\n".join(lines)
+
   response_schema = {
       "type": "object",
       "properties": {
@@ -304,12 +356,6 @@ def generate_key_values(
               "type": "array",
               "items": {
                   "type": "string",
-                  # only adds "enum" if "allowed_values" is not empty
-                  **(
-                      {"enum": key_value.allowed_values}
-                      if key_value.allowed_values
-                      else {}
-                  ),
               },
           }
           for key_value in metadata_keys
@@ -318,13 +364,31 @@ def generate_key_values(
   }
   response_text = _generate_from_content(
       content,
-      prompt,
+      _PROMPT_KEY_VALUES.format(allowed_values=allowed_values),
       additional_instructions,
       language_model,
       response_schema,
-      0.3,
+      0.0,
   )
-  return json.loads(response_text)
+  response_dict = json.loads(response_text)
+  for metadata_key in metadata_keys:
+    if metadata_key.key not in response_dict:
+      values = []
+    elif isinstance(metadata_key.allowed_values, iab.Taxonomy):
+      taxonomy = metadata_key.allowed_values
+      values = taxonomy.get_entities_by_name(response_dict[metadata_key.key])
+    elif metadata_key.allowed_values:
+      values = [
+          value
+          for value in response_dict[metadata_key.key]
+          if value in metadata_key.allowed_values
+      ]
+      values = response_dict[metadata_key.key]
+    else:
+      continue
+    response_dict[metadata_key.key] = values
+
+  return response_dict
 
 
 def generate_metadata(
@@ -351,6 +415,40 @@ def generate_metadata(
       content, [metadata_key], additional_instructions, language_model
   )
   return key_values["keyword"]
+
+
+def generate_iab_categories(
+    content: Content | list[Content],
+    additional_instructions: str = "",
+    language_model: models.MultiModalLLM | None = None,
+) -> list[iab.TaxonomyEntity]:
+  """Generates IAB categories for the provided content.
+
+  Analyzes the content and assigns relevant IAB (Interactive Advertising Bureau)
+  categories. It fetches the latest IAB content and audience taxonomies, then
+  uses the language model to determine the most appropriate categories for the
+  given content.
+
+  Args:
+    content: The content for which to generate metadata. For list inputs, the
+      entire list is treated as one piece of content.
+    additional_instructions: Additional instructions for the language model.
+    language_model: The language model to use. Defaults to a Gemini LLM.
+
+  Returns:
+    A list of IABCategory objects representing the assigned categories.
+  """
+  content_key_value = KeyValue("keyword", iab.create_content_taxonomy())
+  audience_key_value = KeyValue(
+      "expected_audience", iab.create_audience_taxonomy()
+  )
+  response_dict = generate_key_values(
+      content,
+      [content_key_value, audience_key_value],
+      additional_instructions,
+      language_model,
+  )
+  return response_dict["keyword"] + response_dict["expected_audience"]
 
 
 def add_ai_attributes_to_video(
@@ -429,11 +527,22 @@ def _parse_args(args: Sequence[str]) -> argparse.Namespace:
     The parsed arguments.
   """
 
-  argparser = argparse.ArgumentParser(description="Analyzes content using AI.")
+  argparser = argparse.ArgumentParser(
+      description="Analyzes content using AI.",
+      formatter_class=argparse.RawTextHelpFormatter,
+  )
   argparser.add_argument(
       "action",
-      choices=["describe", "summarize", "tag", "title"],
-      help="The action to perform for the provided content.",
+      choices=["describe", "summarize", "tag", "title", "iab"],
+      help=(
+          "The action to perform for the provided content. Valid actions are:\n"
+          "  title: suggests possible titles for the content\n  describe:"
+          " describes the content with as much detail as possible\n  summarize:"
+          " summarizes the content for an external audience\n  tag: identifies"
+          " keywords related to the content (use with --keys to specify custom"
+          " keys)\n  iab: identifies IAB content and audience categories"
+          " related to the content"
+      ),
   )
   argparser.add_argument(
       "--keys",
@@ -481,6 +590,14 @@ def main(args=sys.argv[1:]):
       else:
         preamble = "Suggested Metadata"
         result = generate_metadata(content_file, language_model=gemini)
+    case "iab":
+      preamble = "Suggested IAB Categories"
+      categories = generate_iab_categories(content_file, language_model=gemini)
+      result = f"{'Taxonomy':<20}{'ID':>7}  {'Category'}\n" + "\n".join([
+          f"{category.taxonomy_name:<20}{category.unique_id:>7} "
+          f" {category.name}"
+          for category in categories
+      ])
     case _:
       # argparse should make this impossible
       raise ValueError("Unexpected action specified.")
