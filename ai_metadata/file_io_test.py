@@ -54,8 +54,19 @@ class GeminiFileHandlerTest(unittest.TestCase):
     mock_get_file.assert_called_once_with("filenametxt")
 
   @mock.patch.object(google_genai, "get_file", autospec=True)
-  def test_get_returns_none_if_file_not_found(self, mock_get_file):
+  def test_get_returns_none_if_permission_denied(self, mock_get_file):
     mock_get_file.side_effect = google.api_core.exceptions.PermissionDenied(
+        "File not found"
+    )
+    file = file_io.File("file/name.txt")
+
+    gemini_file = self.file_handler.get(file)
+
+    self.assertIsNone(gemini_file)
+
+  @mock.patch.object(google_genai, "get_file", autospec=True)
+  def test_get_returns_none_if_forbidden(self, mock_get_file):
+    mock_get_file.side_effect = google.api_core.exceptions.Forbidden(
         "File not found"
     )
     file = file_io.File("file/name.txt")

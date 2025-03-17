@@ -76,7 +76,10 @@ class GeminiFileHandler:
       file_name = self._convert_to_gemini_file_name(file.name)
       return google_genai.get_file(file_name)
     # Exception for no access and file not found.
-    except google.api_core.exceptions.PermissionDenied:
+    except (
+        google.api_core.exceptions.PermissionDenied,
+        google.api_core.exceptions.Forbidden,
+    ):
       return None
 
   def wait_for_processing(
