@@ -11,7 +11,7 @@ This is a Python solution which takes a media content (video, images, articles, 
 
 Try it out with Colab!
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blob/main/ai_metadata/colab/ai_metadata.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-marketing-solutions/video-metadata-ai-toolkit/blob/main/ai_metadata/colab/ai_metadata.ipynb)
 
 
 ### **AI Metadata Development**
