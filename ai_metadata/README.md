@@ -9,6 +9,10 @@ are not formally supported by Google and are provided only as a reference.
 
 This is a Python solution which takes a media content (video, images, articles, etc.) and uses a language model to describe and generate metadata for the content. The project supports generating detailed content descriptions, user-friendly summaries, metadata tags, key values, and title suggestions.
 
+Try it out with Colab!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/blob/main/ai_metadata/colab/ai_metadata.ipynb)
+
 
 ### **AI Metadata Development**
 
