@@ -21,7 +21,7 @@ google-cloud-storage==2.18.2
 google-cloud-translate==3.16.0
 google-cloud-videointelligence==2.13.5
 google-cloud-vision==3.7.4
-google-generativeai==0.8.4
+google-genai==1.16.1
 google-crc32c==1.6.0
 google-resumable-media==2.7.2
 googleapis-common-protos==1.65.0
