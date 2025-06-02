@@ -185,6 +185,39 @@ class GeminiLLMAdapterTest(unittest.TestCase):
     )
     self.assertEqual(actual_response_text, "gemini_response_text")
 
+  def test_generate_with_gcs_path_and_vertex_ai_uses_uri(self):
+    self.mock_client.vertexai = True
+    gcs_path = "gs://my-bucket/my-file.mp4"
+    file_to_use = file_io.File(gcs_path)
+    file_to_use.add_cleanup_callback = mock.MagicMock()
+
+    with mock.patch("google.genai.types.Part.from_uri") as mock_from_uri:
+      mock_part = mock.MagicMock()
+      mock_from_uri.return_value = mock_part
+
+      prompt_text_part = "prompt_text_gcs"
+      self.gemini_adapter.generate([prompt_text_part, file_to_use], str, 1.0)
+
+      mock_from_uri.assert_called_once_with(file_uri=gcs_path)
+      self.mock_client.models.generate_content.assert_called_once_with(
+          model="gemini-test-model",
+          contents=[prompt_text_part, mock_part],
+          config=mock.ANY,
+      )
+      # No local file operations should happen for GCS URIs
+      self.mock_client.files.upload.assert_not_called()
+      file_to_use.add_cleanup_callback.assert_not_called()
+
+  def test_generate_with_gcs_path_and_no_vertex_ai_raises_error(self):
+    self.mock_client.vertexai = False
+    gcs_path = "gs://my-bucket/my-file.mp4"
+    file_to_use = file_io.File(gcs_path)
+
+    with self.assertRaisesRegex(
+        ValueError, "GCS paths only supported when using Vertex AI."
+    ):
+      self.gemini_adapter.generate(["prompt_text_part", file_to_use], str, 1.0)
+
 
 if __name__ == "__main__":
   unittest.main()

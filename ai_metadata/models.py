@@ -90,6 +90,12 @@ class GeminiLLMAdapter(MultiModalLLMAdapater):
     if isinstance(prompt_part, str):
       return prompt_part
     elif isinstance(prompt_part, file_io.File):
+      if prompt_part.name.startswith("gs://"):
+        if self._client.vertexai:
+          return genai_types.Part.from_uri(file_uri=prompt_part.name)
+        else:
+          raise ValueError("GCS paths only supported when using Vertex AI.")
+
       gemini_filename = self._create_gemini_file_name(prompt_part.name)
       file = self._get_file(gemini_filename)
       if not file:
@@ -189,6 +195,35 @@ def create_gemini_llm(
     A MultiModalLLM instance.
   """
   client = genai.Client(api_key=api_key or os.environ["GEMINI_API_KEY"])
+  adapter = GeminiLLMAdapter(
+      client=client,
+      model=model,
+      system_prompt=system_prompt,
+  )
+  return MultiModalLLM(adapter)
+
+
+def create_gemini_llm_with_vertex(
+    model: str = "gemini-2.0-flash",
+    system_prompt: str | None = None,
+    gcp_project: str | None = None,
+    gcp_location: str = "global",
+):
+  """Creates and returns a MultiModalLLM configured for Gemini via Vertex AI.
+
+  Args:
+    model: The name of the Gemini model to use (e.g., "gemini-2.0-flash").
+    system_prompt: An optional system prompt to guide the model's behavior.
+    gcp_project: The Google Cloud Project ID. If None, the client will attempt
+      to infer it from the environment.
+    gcp_location: The Google Cloud location. Defaults to 'global'.
+
+  Returns:
+    A MultiModalLLM instance configured to use Gemini via Vertex AI.
+  """
+  client = genai.Client(
+      vertexai=True, project=gcp_project, location=gcp_location
+  )
   adapter = GeminiLLMAdapter(
       client=client,
       model=model,

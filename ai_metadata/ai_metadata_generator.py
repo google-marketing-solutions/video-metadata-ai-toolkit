@@ -16,7 +16,7 @@
 When run from the CLI, this module can be used to processes a video with
 artificial intelligence to generate metadata related to the content.
 
-usage: ai_metadata_generator.py [-h] [--keys KEYS [KEYS ...]]
+usage: ai_metadata_generator.py [-h] [--keys KEYS [KEYS ...]] [--vertex]
 {describe,summarize,tag,title,iab} content_file
 
 Analyzes content using AI.
@@ -27,21 +27,23 @@ positional arguments:
                         actions are:
                           title: suggests possible titles for the content
                           describe: describes the content with as much detail as
-                                    possible
+                          possible
                           summarize: summarizes the content for an external
-                                     audience
+                          audience
                           tag: identifies keywords related to the content (use
-                               with --keys to specify custom keys)
+                          with --keys to specify custom keys)
                           iab: identifies IAB content and audience categories
-                               related to the content
+                          related to the content
   content_file          The URI of the content to be processed (local files
-                        only).
+  only).
 
 options:
   -h, --help            show this help message and exit
   --keys KEYS [KEYS ...]
                         Use with "tag" to create key/values instead of free-form
                         metadata values. No-op otherwise.
+  --vertex, -v          Use Vertex AI. Requires Application Default Credentials
+  with a default project to be configured.
 """
 
 import argparse
@@ -558,6 +560,15 @@ def _parse_args(args: Sequence[str]) -> argparse.Namespace:
       type=str,
       help="The URI of the content to be processed (local files only).",
   )
+  argparser.add_argument(
+      "--vertex",
+      "-v",
+      action="store_true",
+      help=(
+          "Use Vertex AI. Requires Application Default Credentials with a"
+          " default project to be configured."
+      ),
+  )
   return argparser.parse_args(args)
 
 
@@ -572,7 +583,11 @@ def main(args=sys.argv[1:]):
   action = arguments.action
   content_path = arguments.content_file
 
-  gemini = models.create_gemini_llm()
+  gemini = (
+      models.create_gemini_llm_with_vertex()
+      if arguments.vertex
+      else models.create_gemini_llm()
+  )
   content_file = file_io.File(content_path)
   match action:
     case "title":

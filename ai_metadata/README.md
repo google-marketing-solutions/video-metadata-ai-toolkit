@@ -22,35 +22,48 @@ Try it out with Colab!
 
 2.  From inside the environment run `pip install -r requirements.txt`.
 
-3.  Export your Gemini API Key as an environment variable:
+3.  Setup your environment:
+
+If you're using the Gemini API, export your Gemini API Key as an environment variable:
 
 ```
 export GEMINI_API_KEY=[YOUR API KEY]
 ```
 
-4. (Optional) To use ```add_ai_attributes_to_video``` you must also setup your application default credentials for Google Cloud and populate the values in ```project_configs.py```.
+OR if you're using Gemini via the Vertex API, make sure you've configured your application default credentials.
 
 #### **Run AI Metadata Code**
 
 ##### From the command line:
 ```
-usage: ai_metadata_generator.py [-h] [--keys KEYS [KEYS ...]]  content_file
+usage: ai_metadata_generator.py [-h] [--keys KEYS [KEYS ...]] [--vertex]
+{describe,summarize,tag,title,iab} content_file
 
 Analyzes content using AI.
 
 positional arguments:
-                        The action to perform for the provided content. Valid actions are:
+  {describe,summarize,tag,title,iab}
+                        The action to perform for the provided content. Valid
+                        actions are:
                           title: suggests possible titles for the content
-                          describe: describes the content with as much detail as possible
-                          summarize: summarizes the content for an external audience
-                          tag: identifies keywords related to the content
-                          iab: identifies IAB content and audience categories related to the content
-  content_file          The URI of the content to be processed (local files only).
+                          describe: describes the content with as much detail as
+                          possible
+                          summarize: summarizes the content for an external
+                          audience
+                          tag: identifies keywords related to the content (use
+                          with --keys to specify custom keys)
+                          iab: identifies IAB content and audience categories
+                          related to the content
+  content_file          The URI of the content to be processed (local files
+  only).
 
 options:
   -h, --help            show this help message and exit
   --keys KEYS [KEYS ...]
-                        Use with "tag" to create key/values instead of free-form metadata values. No-op otherwise.
+                        Use with "tag" to create key/values instead of free-form
+                        metadata values. No-op otherwise.
+  --vertex, -v          Use Vertex AI. Requires Application Default Credentials
+  with a default project to be configured.
 ```
 
 title: Suggests possible titles for the content
