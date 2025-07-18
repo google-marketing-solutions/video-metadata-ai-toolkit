@@ -53,7 +53,7 @@ shapely==2.0.6
 six==1.16.0
 tomlkit==0.13.2
 typing_extensions==4.12.2
-urllib3==2.2.3
+urllib3==2.5.0
 vertexai==1.70.0
 gunicorn==23.0.0
 flask==3.1.1
