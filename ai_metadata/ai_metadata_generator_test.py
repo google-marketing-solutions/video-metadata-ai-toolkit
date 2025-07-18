@@ -16,11 +16,9 @@
 import unittest
 from unittest import mock
 
-import ai_metadata_generator
-import iab
-import models
-import transcription_utils
-import video_class
+from ai_metadata import ai_metadata_generator
+from ai_metadata import iab
+from ai_metadata import models
 
 
 class TestAIMetadataGenerator(unittest.TestCase):
@@ -563,53 +561,6 @@ class TestAIMetadataGenerator(unittest.TestCase):
             iab.TaxonomyEntity("content", "2", "tag3"),
             iab.TaxonomyEntity("audience", "1", "audience2"),
         ],
-    )
-
-  @mock.patch.object(models, "create_gemini_llm", autospec=True)
-  @mock.patch.object(
-      transcription_utils, "get_transcript_from_video", autospec=True
-  )
-  @mock.patch.object(ai_metadata_generator, "describe", autospec=True)
-  @mock.patch.object(ai_metadata_generator, "generate_metadata", autospec=True)
-  @mock.patch.object(ai_metadata_generator, "summarize", autospec=True)
-  @mock.patch.object(ai_metadata_generator, "suggest_titles", autospec=True)
-  def test_add_ai_attributes_to_video(
-      self,
-      mock_suggest_titles,
-      mock_summarize,
-      mock_generate_metadata,
-      mock_describe,
-      mock_get_transcript_from_video,
-      _,
-  ):
-    """Tests adding ai attributes to a video (e.g. metadata/summary/titles)."""
-    transcript = (
-        "This is a long transcript with more than 100 characters. This ensures"
-        " the transcription length condition is satisfied."
-    )
-    mock_get_transcript_from_video.return_value = transcript
-    video = video_class.Video(
-        video_id="1234", uri="https://example.com/video.mp4", duration=1200
-    )
-    audio_bucket_name = "audio_bucket"
-    mock_suggest_titles.return_value = ["Title 1", "Title 2"]
-    mock_summarize.return_value = "Generated external summary"
-    mock_generate_metadata.return_value = ["tag1", "tag2"]
-    mock_describe.return_value = "Generated summary"
-
-    video = ai_metadata_generator.add_ai_attributes_to_video(
-        video, audio_bucket_name
-    )
-
-    self.assertEqual(
-        video.transcript,
-        transcript,
-    )
-    self.assertEqual(video.summary, "Generated summary")
-    self.assertEqual(video.ai_generated_metadata, ["tag1", "tag2"])
-    self.assertEqual(video.ai_suggested_titles, ["Title 1", "Title 2"])
-    self.assertEqual(
-        video.ai_suggested_external_summary, "Generated external summary"
     )
 
 

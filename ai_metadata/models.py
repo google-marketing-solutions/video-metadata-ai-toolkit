@@ -9,7 +9,7 @@ import hashlib
 import os
 import time
 from typing import Protocol
-import file_io
+from ai_metadata import file_io
 import google
 from google import genai
 from google.genai import types as genai_types

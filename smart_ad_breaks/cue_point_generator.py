@@ -13,11 +13,7 @@
 # limitations under the License.
 """Determines optimal cue points based on shot changes and audio."""
 
-import argparse
-import sys
-
-from google.cloud import videointelligence
-import video_analysis
+from smart_ad_breaks import video_analysis
 
 
 def _calculate_optimal_cue_points(
@@ -92,73 +88,3 @@ def determine_video_cue_points(
       minimum_time_for_first_cue_point=minimum_time_for_first_cue_point,
       minimum_time_between_cue_points=minimum_time_between_cue_points,
   )
-
-
-def _parse_args(args) -> argparse.Namespace:
-  argparser = argparse.ArgumentParser(
-      description=(
-          "Determines the optimal cue points for a given video file based on"
-          "shot changes."
-      )
-  )
-  argparser.add_argument(
-      "video",
-      type=str,
-      help=(
-          "The location of the video. For videos on GCS, this is the URI in "
-          "the format: gs://path/to/video. Local video files are not currently"
-          " supported."
-      ),
-  )
-  argparser.add_argument(
-      "--first_cue",
-      "-f",
-      type=float,
-      default=0.0,
-      help=(
-          "The earliest time that a cue point should be created. Defaults to "
-          "0.0."
-      ),
-  )
-  argparser.add_argument(
-      "--between_cues",
-      "-b",
-      type=float,
-      default=30.0,
-      help=(
-          "The minimum amount of time that should be between two cue points. "
-          "Defaults to 30.0."
-      ),
-  )
-  argparser.add_argument(
-      "--volume_threshold",
-      "-v",
-      type=float,
-      default=None,
-      help=(
-          "If provided, the maximum in volume, in dB, for a cue point. This is"
-          " always a no-op for files hosted on GCP."
-      ),
-  )
-  return argparser.parse_args(args)
-
-
-def main(args=sys.argv[1:]):
-  args = _parse_args(args)
-  if args.video.startswith("gs://"):
-    video_intel_client = videointelligence.VideoIntelligenceServiceClient()
-    video_analyzer = video_analysis.CloudVideoAnalyzer(video_intel_client)
-  else:
-    video_analyzer = video_analysis.FfmpegVideoAnalyzer()
-  cue_points = determine_video_cue_points(
-      args.video,
-      video_analyzer,
-      minimum_time_for_first_cue_point=args.first_cue,
-      minimum_time_between_cue_points=args.between_cues,
-      volume_threshold=args.volume_threshold,
-  )
-  print("Recommended cue points: ", cue_points)
-
-
-if __name__ == "__main__":
-  main()

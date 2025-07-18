@@ -16,8 +16,8 @@
 import unittest
 from unittest import mock
 
-import smart_ad_breaks
-import video_analysis
+from smart_ad_breaks import cue_point_generator
+from smart_ad_breaks import video_analysis
 
 _TEST_SHOT_DETECT_RESPONSE = [
     video_analysis.VideoSegment(0.0, 12.1),
@@ -33,7 +33,7 @@ class SmartAdBreaksTest(unittest.TestCase):
   def test_determine_video_cue_points_video_analyzer_args(self):
     mock_analyzer = mock.MagicMock(spec=video_analysis.VideoAnalyzer)
 
-    smart_ad_breaks.determine_video_cue_points(
+    cue_point_generator.determine_video_cue_points(
         "video", mock_analyzer, volume_threshold=-10.0
     )
 
@@ -46,7 +46,7 @@ class SmartAdBreaksTest(unittest.TestCase):
         detect_shot_responses=[_TEST_SHOT_DETECT_RESPONSE]
     )
 
-    cue_points = smart_ad_breaks.determine_video_cue_points(
+    cue_points = cue_point_generator.determine_video_cue_points(
         "video_uri", fake_video_analyzer
     )
 
@@ -57,7 +57,7 @@ class SmartAdBreaksTest(unittest.TestCase):
         detect_shot_responses=[_TEST_SHOT_DETECT_RESPONSE]
     )
 
-    cue_points = smart_ad_breaks.determine_video_cue_points(
+    cue_points = cue_point_generator.determine_video_cue_points(
         "video_uri", fake_video_analyzer, minimum_time_for_first_cue_point=10.0
     )
 
@@ -68,7 +68,7 @@ class SmartAdBreaksTest(unittest.TestCase):
         detect_shot_responses=[_TEST_SHOT_DETECT_RESPONSE]
     )
 
-    cue_points = smart_ad_breaks.determine_video_cue_points(
+    cue_points = cue_point_generator.determine_video_cue_points(
         "video_uri", fake_video_analyzer, minimum_time_between_cue_points=5.0
     )
 

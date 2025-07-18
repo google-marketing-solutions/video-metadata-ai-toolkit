@@ -3,9 +3,9 @@ import os
 import tempfile
 import unittest
 from unittest import mock
-import file_io
+from ai_metadata import file_io
+from ai_metadata import models
 from google import genai
-import models
 
 
 class MultiModalLLMTest(unittest.TestCase):
