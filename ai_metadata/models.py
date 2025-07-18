@@ -10,7 +10,6 @@ import os
 import time
 from typing import Protocol
 from ai_metadata import file_io
-import google
 from google import genai
 from google.genai import types as genai_types
 
@@ -69,11 +68,7 @@ class GeminiLLMAdapter(MultiModalLLMAdapater):
     try:
       return self._client.files.get(name=name)
     # Exception for no access and file not found.
-    except (
-        genai.errors.ClientError,
-        google.api_core.exceptions.PermissionDenied,
-        google.api_core.exceptions.Forbidden,
-    ):
+    except (genai.errors.ClientError,):
       return None
 
   def _parse_prompt_part(self, prompt_part: PromptPart) -> genai_types.Content:
@@ -109,7 +104,7 @@ class GeminiLLMAdapter(MultiModalLLMAdapater):
         while True:
           if file.state == genai.types.FileState.PROCESSING:
             time.sleep(10)
-            file = self._client.files.get(name=gemini_filename)
+            file = self._get_file(gemini_filename)
           else:
             break
       return file
