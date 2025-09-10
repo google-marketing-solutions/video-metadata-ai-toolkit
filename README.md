@@ -136,3 +136,12 @@ To manually run tests and the linter:
 ```
 sh test_and_lint.sh
 ```
+### **Upgrading Dependencies**
+
+pip-compile is used to generate the ```requirements.txt``` file. To update
+dependencies, make changes to ```requirements.in``` and then use the following
+command:
+
+```
+pip-compile requirements.in --generate-hashes --upgrade -o requirements.txt
+```

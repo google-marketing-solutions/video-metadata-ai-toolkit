@@ -1,0 +1,26 @@
+# Web Framework
+flask
+gunicorn
+
+# Google Cloud & AI Services
+google-cloud-aiplatform
+google-cloud-bigquery
+google-cloud-resource-manager
+google-cloud-speech
+google-cloud-storage
+google-cloud-translate
+google-cloud-videointelligence
+google-cloud-vision
+google-genai
+
+# Data Processing & Utilities
+pandas
+ffmpeg-python
+shapely
+feedparser
+
+# Development Dependencies
+black
+isort
+pylint
+pyink
